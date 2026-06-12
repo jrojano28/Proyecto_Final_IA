@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predicción Dinámica - Proyecto Final IA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <style>
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .step-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.35rem 0.85rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .step-pill.done {
+            background: #f0fdf4;
+            color: #15803d;
+            border: 1.5px solid #bbf7d0;
+        }
+        .step-pill.active {
+            background: #fffbeb;
+            color: #b45309;
+            border: 1.5px solid #fde68a;
+        }
+        .step-pill.inactive {
+            background: #f8fafc;
+            color: #94a3b8;
+            border: 1.5px solid #e2e8f0;
+        }
+        .step-arrow { color: #cbd5e1; font-size: 0.9rem; }
+        .prob-bar-container {
+            height: 18px;
+            background: rgba(0,0,0,0.06);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+        .prob-bar-fill {
+            height: 100%;
+            border-radius: 99px;
+            transition: width 1s ease;
+            background: linear-gradient(135deg, #4f46e5, #0ea5e9);
+        }
+        .prob-bar-fill.predicted {
+            background: linear-gradient(90deg, #10b981, #34d399);
+            box-shadow: 0 0 12px rgba(52, 211, 153, 0.3);
+        }
+        .prob-row {
+            padding: 0.6rem 0;
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+        .prob-row:last-child { border-bottom: none; }
+    </style>
+</head>
+<body>
+
+<div class="container mt-5">
+
+    <!-- Indicador de pasos -->
+    <div class="step-indicator">
+        <span class="step-pill done"><i class="bi bi-check-lg"></i> Paso 1: Dataset Cargado</span>
+        <span class="step-arrow"><i class="bi bi-chevron-right"></i></span>
+        <span class="step-pill done"><i class="bi bi-check-lg"></i> Paso 2: Modelo Entrenado</span>
+        <span class="step-arrow"><i class="bi bi-chevron-right"></i></span>
+        <span class="step-pill active"><i class="bi bi-magic"></i> Paso 3: Predecir</span>
+    </div>
+
+
+    <!-- ═══ FORMULARIO DE PREDICCIÓN ══════════════════════════════════════════ -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="mb-0 fs-3"><i class="bi bi-magic me-2 text-gradient"></i>Realizar Predicción</h2>
+            <span class="badge bg-primary">Formulario Dinámico</span>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">
+                Ingrese los datos del nuevo registro a clasificar. Los campos se generaron
+                automáticamente a partir del modelo entrenado. Las columnas categóricas
+                presentan un selector con las opciones del entrenamiento.
+            </p>
+
+            <form method="POST" class="mt-4">
+
+                <div class="row g-3">
+                    {% for columna in columnas %}
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label d-flex align-items-center justify-content-between">
+                            <span>{{ columna }}</span>
+                            {% if columna in encoders %}
+                                <span class="badge bg-secondary font-monospace" style="font-size:0.7rem;">CATEGÓRICO</span>
+                            {% else %}
+                                <span class="badge bg-dark border border-secondary font-monospace" style="font-size:0.7rem;">NUMÉRICO</span>
+                            {% endif %}
+                        </label>
+
+                        {% if columna in encoders %}
+                            <select name="{{ columna }}" class="form-select" required>
+                                <option value="" disabled selected>-- Elegir {{ columna }} --</option>
+                                {% for opcion in encoders[columna].classes_ %}
+                                    <option value="{{ opcion }}">{{ opcion }}</option>
+                                {% endfor %}
+                            </select>
+                        {% else %}
+                            <input
+                                type="number"
+                                step="any"
+                                name="{{ columna }}"
+                                class="form-control"
+                                placeholder="Número para {{ columna }}"
+                                required
+                            >
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="d-flex gap-2 justify-content-end mt-4">
+                    <a href="/entrenar_csv" class="btn btn-dark">
+                        <i class="bi bi-arrow-left me-2"></i>Volver a Entrenamiento
+                    </a>
+                    <button class="btn btn-primary px-5">
+                        <i class="bi bi-play-circle-fill me-2"></i>Calcular Predicción
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══ RESULTADO DE LA PREDICCIÓN ═══════════════════════════════════════ -->
+    {% if resultado is not none %}
+
+    <!-- Clase predicha -->
+    <div class="card border-success mb-4">
+        <div class="card-header bg-dark">
+            <h3 class="mb-0 fs-4 text-center">
+                <i class="bi bi-check2-circle me-2 text-success"></i>Resultado de la Clasificación
+            </h3>
+        </div>
+        <div class="card-body text-center py-4">
+            <p class="text-muted mb-1">El modelo clasifica este registro como:</p>
+            <div class="display-4 fw-bold text-gradient py-2">
+                {{ resultado }}
+            </div>
+            <div class="alert alert-info py-2 mt-3 d-inline-block px-4">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                La regresión logística asigna una <strong>probabilidad</strong> a cada clase posible.
+                La clase con mayor probabilidad es la predicción final.
+            </div>
+        </div>
+    </div>
+
+    <!-- Probabilidades por clase -->
+    {% if probabilidades %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="mb-0 fs-4">
+                <i class="bi bi-pie-chart-fill me-2 text-warning"></i>Probabilidades por Clase (predict_proba)
+            </h3>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-4">
+                La regresión logística no solo predice una clase, sino que calcula la
+                <strong>probabilidad de pertenencia</strong> a cada clase posible. La suma de todas las probabilidades es siempre 100%.
+            </p>
+
+            {% for item in probabilidades %}
+            <div class="prob-row">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <div class="d-flex align-items-center gap-2">
+                        {% if item.es_predicha %}
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <strong class="text-success">{{ item.clase }}</strong>
+                            <span class="badge bg-success ms-1">Predicción</span>
+                        {% else %}
+                            <i class="bi bi-circle text-muted"></i>
+                            <span>{{ item.clase }}</span>
+                        {% endif %}
+                    </div>
+                    <span class="fw-bold {% if item.es_predicha %}text-success{% else %}text-muted{% endif %}">
+                        {{ item.porcentaje }}%
+                    </span>
+                </div>
+                <div class="prob-bar-container">
+                    <div
+                        class="prob-bar-fill {% if item.es_predicha %}predicted{% endif %}"
+                        style="width: {{ item.porcentaje }}%;"
+                    ></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="d-flex justify-content-center mb-5">
+        <a href="/prediccion" class="btn btn-primary px-5">
+            <i class="bi bi-arrow-repeat me-2"></i>Nueva Predicción
+        </a>
+    </div>
+
+    {% endif %}
+
+</div>
+
+</body>
+</html>

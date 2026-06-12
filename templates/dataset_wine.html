@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dataset Wine - Proyecto Final IA</title>
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Custom Premium Stylesheet -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+
+<div class="container mt-5">
+
+    <div class="card mb-4">
+        <div class="card-header bg-dark d-flex justify-content-between align-items-center">
+            <h2 class="mb-0 fs-3 text-gradient"><i class="bi bi-glass-ease me-2"></i>Dataset Wine</h2>
+            <span class="badge bg-danger">178 filas x 14 columnas</span>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">
+                El conjunto de datos de vino es el resultado de un análisis químico de vinos cultivados en la misma región en Italia por tres cultivadores diferentes. El análisis determinó las cantidades de 13 constituyentes que se encuentran en cada uno de los tres tipos de vinos.
+            </p>
+
+            <div class="table-responsive">
+                {{ tabla|safe }}
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-center">
+        <a href="/" class="btn btn-primary px-5">
+            <i class="bi bi-arrow-left me-2"></i>Volver al Inicio
+        </a>
+    </div>
+
+</div>
+
+</body>
+</html>

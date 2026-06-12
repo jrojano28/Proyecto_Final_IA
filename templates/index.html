@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Machine Learning - Proyecto Final IA</title>
+    <meta name="description" content="Plataforma educativa para entrenar modelos de clasificación con regresión logística sobre cualquier dataset CSV.">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <style>
+        .step-card {
+            border-radius: 18px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            height: 100%;
+        }
+        .step-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 40px rgba(79, 70, 229, 0.1);
+        }
+        .step-number {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+        .step-icon {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+        }
+        .connector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #cbd5e1;
+            font-size: 1.5rem;
+            padding: 0 0.5rem;
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: #eef2ff;
+            border: 1px solid #c7d2fe;
+            color: #4338ca;
+            border-radius: 999px;
+            padding: 0.35rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+        .tech-pill {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+            border-radius: 999px;
+            padding: 0.3rem 0.85rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .stat-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #4f46e5;
+        }
+        .stat-label {
+            font-size: 0.78rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container mt-5 pb-5">
+
+    <!-- ═══ HÉROE / ENCABEZADO ══════════════════════════════════════════════ -->
+    <div class="text-center mb-5">
+        <div class="hero-badge">
+            <i class="bi bi-cpu-fill"></i>
+            Inteligencia Artificial · Clasificación Supervisada
+        </div>
+        <h1 class="display-5 fw-bold mb-3">
+            Sistema de <span class="text-gradient">Machine Learning</span>
+        </h1>
+        <p class="lead text-muted mx-auto mb-4" style="max-width:560px;">
+            Carga cualquier dataset CSV, entrena un clasificador de
+            <strong>Regresión Logística</strong> y realiza predicciones en tiempo real.
+        </p>
+        <div class="d-flex justify-content-center gap-2 flex-wrap">
+            <span class="tech-pill"><i class="bi bi-filetype-py me-1 text-warning"></i>Python · Flask</span>
+            <span class="tech-pill"><i class="bi bi-gear-fill me-1 text-danger"></i>Scikit-Learn</span>
+            <span class="tech-pill"><i class="bi bi-table me-1 text-info"></i>Pandas</span>
+            <span class="tech-pill"><i class="bi bi-bar-chart-fill me-1 text-success"></i>Matplotlib</span>
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- ═══ FLUJO PRINCIPAL: 3 PASOS ════════════════════════════════════════ -->
+    <h2 class="fs-4 fw-bold text-center mb-4 mt-4">
+        <i class="bi bi-arrow-right-circle-fill text-gradient me-2"></i>
+        Flujo de Trabajo
+    </h2>
+
+    <div class="row g-3 align-items-stretch mb-5">
+
+        <!-- Paso 1 -->
+        <div class="col-md">
+            <div class="card step-card h-100" style="border-color: #c7d2fe;">
+                <div class="card-body d-flex flex-column p-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="step-number" style="background:#eef2ff; color:#4338ca;">1</div>
+                        <div class="step-icon mb-0" style="font-size:1.8rem;">
+                            <i class="bi bi-file-earmark-arrow-up-fill text-primary"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold fs-5 mb-0">Cargar Dataset</div>
+                            <div class="text-muted small">Archivo CSV</div>
+                        </div>
+                    </div>
+                    <p class="text-muted small flex-grow-1">
+                        Sube tu propio archivo CSV. La aplicación detecta automáticamente
+                        las columnas numéricas y categóricas para preparar el entrenamiento.
+                    </p>
+                    <a href="/archivo" id="btn-cargar" class="btn btn-primary w-100 mt-3">
+                        <i class="bi bi-upload me-2"></i>Subir Archivo CSV
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Separador visual -->
+        <div class="col-auto d-none d-md-flex connector">
+            <i class="bi bi-chevron-double-right"></i>
+        </div>
+
+        <!-- Paso 2 -->
+        <div class="col-md">
+            <div class="card step-card h-100" style="border-color: #bbf7d0;">
+                <div class="card-body d-flex flex-column p-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="step-number" style="background:#f0fdf4; color:#15803d;">2</div>
+                        <div class="step-icon mb-0" style="font-size:1.8rem;">
+                            <i class="bi bi-cpu-fill text-success"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold fs-5 mb-0">Entrenar Modelo</div>
+                            <div class="text-muted small">Regresión Logística</div>
+                        </div>
+                    </div>
+                    <p class="text-muted small flex-grow-1">
+                        Selecciona la variable objetivo y las variables predictoras.
+                        El modelo se entrena con 80% de los datos y se evalúa con el 20% restante.
+                    </p>
+                    <a href="/entrenar_csv" id="btn-entrenar" class="btn btn-success w-100 mt-3">
+                        <i class="bi bi-play-circle-fill me-2"></i>Configurar y Entrenar
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Separador visual -->
+        <div class="col-auto d-none d-md-flex connector">
+            <i class="bi bi-chevron-double-right"></i>
+        </div>
+
+        <!-- Paso 3 -->
+        <div class="col-md">
+            <div class="card step-card h-100" style="border-color: #fde68a;">
+                <div class="card-body d-flex flex-column p-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="step-number" style="background:#fffbeb; color:#b45309;">3</div>
+                        <div class="step-icon mb-0" style="font-size:1.8rem;">
+                            <i class="bi bi-magic text-warning"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold fs-5 mb-0">Predecir</div>
+                            <div class="text-muted small">Nuevos datos</div>
+                        </div>
+                    </div>
+                    <p class="text-muted small flex-grow-1">
+                        Ingresa los datos de un nuevo registro. El modelo predice la clase
+                        y muestra la probabilidad de pertenencia a cada categoría.
+                    </p>
+                    <a href="/prediccion" id="btn-predecir" class="btn btn-warning w-100 mt-3 text-white">
+                        <i class="bi bi-question-diamond-fill me-2"></i>Realizar Predicción
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ═══ RESUMEN EDUCATIVO / MÉTRICAS ════════════════════════════════════ -->
+    <div class="row g-3 mb-5">
+        <div class="col-md-3 col-6">
+            <div class="stat-box">
+                <div class="stat-value">4</div>
+                <div class="stat-label">Métricas evaluadas</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-box">
+                <div class="stat-value">80/20</div>
+                <div class="stat-label">División train/test</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-box">
+                <div class="stat-value">CSV</div>
+                <div class="stat-label">Cualquier dataset</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-box">
+                <div class="stat-value">100%</div>
+                <div class="stat-label">Genérico y dinámico</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ OTRAS SECCIONES ══════════════════════════════════════════════════ -->
+    <h2 class="fs-4 fw-bold text-center mb-4">
+        <i class="bi bi-grid-fill text-gradient me-2"></i>
+        Más Información
+    </h2>
+    <div class="row g-3">
+
+        <div class="col-md-4">
+            <div class="card step-card">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <i class="bi bi-grid-3x3-gap-fill fs-3 text-info"></i>
+                        <div class="fw-bold">Matriz de Confusión</div>
+                    </div>
+                    <p class="text-muted small mb-3">
+                        Visualiza gráficamente los aciertos y errores de clasificación del último modelo entrenado.
+                    </p>
+                    <a href="/matriz_csv" class="btn btn-dark btn-sm w-100">
+                        <i class="bi bi-image me-2"></i>Ver Matriz
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card step-card">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <i class="bi bi-robot fs-3 text-primary"></i>
+                        <div class="fw-bold">Uso de IA Generativa</div>
+                    </div>
+                    <p class="text-muted small mb-3">
+                        Documentación sobre el uso responsable de herramientas de IA generativa en este proyecto.
+                    </p>
+                    <a href="/ia_generativa" class="btn btn-dark btn-sm w-100">
+                        <i class="bi bi-book me-2"></i>Ver Documentación
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card step-card">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <i class="bi bi-info-circle-fill fs-3 text-success"></i>
+                        <div class="fw-bold">Acerca del Proyecto</div>
+                    </div>
+                    <p class="text-muted small mb-3">
+                        Tecnologías implementadas, métricas explicadas y arquitectura del sistema de clasificación.
+                    </p>
+                    <a href="/acerca" class="btn btn-dark btn-sm w-100">
+                        <i class="bi bi-info-circle me-2"></i>Ver Detalles
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

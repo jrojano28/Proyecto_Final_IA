@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrenar Dataset CSV - Proyecto Final IA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <style>
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .step-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.35rem 0.85rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .step-pill.done {
+            background: #f0fdf4;
+            color: #15803d;
+            border: 1.5px solid #bbf7d0;
+        }
+        .step-pill.active {
+            background: #f0fdf4;
+            color: #15803d;
+            border: 1.5px solid #4ade80;
+        }
+        .step-pill.inactive {
+            background: #f8fafc;
+            color: #94a3b8;
+            border: 1.5px solid #e2e8f0;
+        }
+        .step-arrow { color: #cbd5e1; font-size: 0.9rem; }
+        .feature-checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 0.5rem;
+        }
+        .feature-check-item {
+            background: #f8fafc;
+            border: 1px solid rgba(0,0,0,0.06);
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .feature-check-item:hover {
+            border-color: rgba(79, 70, 229, 0.4);
+            background: rgba(79, 70, 229, 0.05);
+        }
+        .feature-check-item.disabled-target {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .coef-bar {
+            height: 8px;
+            border-radius: 99px;
+            background: linear-gradient(135deg, #4f46e5, #0ea5e9);
+            transition: width 0.8s ease;
+        }
+        .metric-explanation {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.35rem;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container mt-5">
+
+    <!-- Indicador de pasos -->
+    <div class="step-indicator">
+        <span class="step-pill done"><i class="bi bi-check-lg"></i> Paso 1: Dataset Cargado</span>
+        <span class="step-arrow"><i class="bi bi-chevron-right"></i></span>
+        <span class="step-pill active"><i class="bi bi-cpu"></i> Paso 2: Entrenar Modelo</span>
+        <span class="step-arrow"><i class="bi bi-chevron-right"></i></span>
+        <span class="step-pill inactive"><i class="bi bi-magic"></i> Paso 3: Predecir</span>
+    </div>
+
+    <!-- Mensajes de sistema (flash) -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'warning' if category == 'warning' else 'info' }} alert-dismissible fade show d-flex gap-2 align-items-start" role="alert">
+                <i class="bi bi-exclamation-triangle-fill mt-1 flex-shrink-0"></i>
+                <div>{{ message }}</div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Aviso sobre selección de target -->
+    <div class="alert alert-info py-2 mb-3" style="font-size:0.85rem;">
+        <i class="bi bi-lightbulb-fill me-2"></i>
+        <strong>Tip:</strong> La variable objetivo (Target) debe ser una columna con
+        <strong>categorías o clases discretas</strong> (p. ej. Sí/No, Especie, Tipo, Clase).
+        Columnas numéricas continuas (precios, pesos, temperaturas) se agruparán automáticamente en rangos.
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="mb-0 fs-3"><i class="bi bi-cpu-fill me-2 text-gradient"></i>Entrenar Modelo CSV</h2>
+            <span class="badge bg-success"><i class="bi bi-circle-fill pulse-indicator me-1"></i>Listo</span>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">
+                Configure el modelo de clasificación. Seleccione la <strong>variable objetivo</strong> (lo que el modelo aprenderá a predecir)
+                y las <strong>variables predictoras</strong> (la información que se usará como entrada).
+            </p>
+
+            <form method="POST" id="training-form" class="mt-3">
+
+                <!-- Step 1: Target -->
+                <div class="mb-4">
+                    <label class="form-label">
+                        <i class="bi bi-bullseye text-danger me-2"></i>
+                        <strong>Paso 1:</strong> Seleccione la variable objetivo (Target)
+                    </label>
+                    <select name="target" id="target-select" class="form-select form-select-lg" required>
+                        <option value="" disabled selected>-- Elegir Variable Objetivo --</option>
+                        {% for columna in columnas %}
+                            <option value="{{ columna }}">{{ columna }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text text-muted small mt-1">
+                        Esta es la columna que el modelo aprenderá a predecir (etiqueta de clase).
+                    </div>
+                </div>
+
+                <!-- Step 2: Features -->
+                <div class="mb-4">
+                    <label class="form-label d-flex align-items-center justify-content-between">
+                        <span>
+                            <i class="bi bi-list-check text-info me-2"></i>
+                            <strong>Paso 2:</strong> Seleccione las variables predictoras (Features)
+                        </span>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-dark btn-sm" onclick="selectAllFeatures()">Todas</button>
+                            <button type="button" class="btn btn-dark btn-sm" onclick="deselectAllFeatures()">Ninguna</button>
+                        </div>
+                    </label>
+                    <div class="feature-checkbox-grid" id="features-container">
+                        {% for columna in columnas %}
+                        <label class="feature-check-item" id="label-{{ loop.index }}" data-col="{{ columna }}">
+                            <input
+                                type="checkbox"
+                                name="features"
+                                value="{{ columna }}"
+                                id="feat-{{ loop.index }}"
+                                class="form-check-input feature-check"
+                                checked
+                            >
+                            <span class="small">{{ columna }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <div class="form-text text-muted small mt-2">
+                        Seleccione al menos una variable. La variable objetivo se excluirá automáticamente.
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 justify-content-end">
+                    <a href="/" class="btn btn-dark">
+                        <i class="bi bi-house-door me-2"></i>Inicio
+                    </a>
+                    <button class="btn btn-success px-4">
+                        <i class="bi bi-play-fill me-2"></i>Entrenar Modelo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══ RESULTADOS DEL ENTRENAMIENTO ═════════════════════════════════════ -->
+    {% if accuracy is not none %}
+
+    <!-- Resumen del entrenamiento -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="mb-0 fs-4"><i class="bi bi-info-circle-fill me-2 text-info"></i>Resumen del Entrenamiento</h3>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 text-center">
+                <div class="col-6 col-md-3">
+                    <div class="p-3 bg-dark rounded-3 border border-secondary">
+                        <div class="text-muted small text-uppercase">Target</div>
+                        <div class="fw-bold text-warning mt-1 text-truncate">{{ target_usado }}</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="p-3 bg-dark rounded-3 border border-secondary">
+                        <div class="text-muted small text-uppercase">Features usadas</div>
+                        <div class="fw-bold text-info mt-1 fs-4">{{ variables_usadas|length }}</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="p-3 bg-dark rounded-3 border border-secondary">
+                        <div class="text-muted small text-uppercase">Muestras entrenamiento</div>
+                        <div class="fw-bold text-success mt-1 fs-4">{{ n_train }}</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="p-3 bg-dark rounded-3 border border-secondary">
+                        <div class="text-muted small text-uppercase">Muestras prueba</div>
+                        <div class="fw-bold text-danger mt-1 fs-4">{{ n_test }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="alert alert-info py-2 text-center mt-3">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                División 80% / 20%: el modelo vio <strong>{{ n_train }} muestras</strong> durante el entrenamiento
+                y fue evaluado con <strong>{{ n_test }} muestras</strong> que nunca había visto.
+            </div>
+        </div>
+    </div>
+
+    <!-- Métricas de Evaluación -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="mb-0 fs-4"><i class="bi bi-bar-chart-line-fill me-2 text-gradient"></i>Métricas de Evaluación</h3>
+        </div>
+        <div class="card-body">
+            <div class="metrics-grid">
+
+                <div class="metric-card">
+                    <div class="metric-value text-success">{{ accuracy }}%</div>
+                    <div class="metric-label">Accuracy</div>
+                    <div class="metric-explanation">
+                        Porcentaje de predicciones correctas sobre el total.
+                        Un 100% significa que no hubo errores. Es la métrica más intuitiva.
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-value text-primary">{{ precision }}%</div>
+                    <div class="metric-label">Precision</div>
+                    <div class="metric-explanation">
+                        De todas las veces que el modelo predijo una clase, ¿cuántas acertó?
+                        Alta precisión = pocos falsos positivos.
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-value text-warning">{{ recall }}%</div>
+                    <div class="metric-label">Recall</div>
+                    <div class="metric-explanation">
+                        De todos los casos reales de cada clase, ¿cuántos detectó el modelo?
+                        Alto recall = pocos falsos negativos.
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-value text-danger">{{ f1 }}%</div>
+                    <div class="metric-label">F1 Score</div>
+                    <div class="metric-explanation">
+                        Media armónica de Precision y Recall. Es la métrica más balanceada
+                        cuando las clases están desbalanceadas.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Coeficientes del Modelo -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="mb-0 fs-4"><i class="bi bi-sliders me-2 text-warning"></i>Coeficientes del Modelo (Importancia de Variables)</h3>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info py-2 mb-4">
+                <i class="bi bi-lightbulb-fill me-2"></i>
+                <strong>¿Qué es un coeficiente?</strong> En la regresión logística, cada variable predictora tiene un coeficiente.
+                Un coeficiente <strong>mayor</strong> (en valor absoluto) indica que esa variable tiene <strong>mayor influencia</strong>
+                en la predicción del modelo. Un coeficiente positivo incrementa la probabilidad de la clase; uno negativo la reduce.
+            </div>
+
+            <p class="text-muted small mb-3">
+                Intercepto del modelo: <code>{{ intercepto }}</code>
+                — Es el valor base del modelo cuando todas las variables son cero.
+            </p>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Variable Predictora</th>
+                            <th>Coeficiente</th>
+                            <th style="width:35%">Influencia Visual</th>
+                            <th>Impacto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in coeficientes %}
+                        <tr>
+                            <td class="text-muted">{{ loop.index }}</td>
+                            <td><code>{{ item.variable }}</code></td>
+                            <td>
+                                <span class="fw-bold {% if item.coeficiente > 0 %}text-success{% else %}text-danger{% endif %}">
+                                    {{ item.coeficiente }}
+                                </span>
+                            </td>
+                            <td>
+                                {% set max_coef = coeficientes[0].coeficiente|abs %}
+                                {% set pct = (item.coeficiente|abs / max_coef * 100)|round|int if max_coef > 0 else 0 %}
+                                <div style="background:rgba(255,255,255,0.05); border-radius:99px; height:8px;">
+                                    <div class="coef-bar" style="width:{{ pct }}%;"></div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if item.impacto == 'alto' %}
+                                    <span class="badge bg-warning text-dark">🔥 Alto</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Bajo</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Matriz de Confusión -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="mb-0 fs-4"><i class="bi bi-grid-3x3-gap-fill me-2 text-gradient"></i>Matriz de Confusión</h3>
+            <a href="/matriz_csv" class="btn btn-dark btn-sm" target="_blank">
+                <i class="bi bi-fullscreen me-1"></i>Pantalla Completa
+            </a>
+        </div>
+        <div class="card-body text-center">
+            <div class="alert alert-info py-2 text-start mb-4">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                La diagonal principal (de arriba-izquierda a abajo-derecha) muestra los aciertos del modelo.
+                Los valores fuera de la diagonal son los errores de clasificación.
+            </div>
+            <div class="d-inline-block p-2 bg-dark rounded-3 border border-secondary">
+                <img
+                    src="{{ url_for('static', filename='matriz_csv.png') }}?t={{ range(1,100000)|random }}"
+                    class="img-fluid border"
+                    alt="Matriz de Confusión"
+                    style="max-width:500px; width:100%; border-radius:8px;"
+                >
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-center mb-5">
+        <a href="/prediccion" class="btn btn-primary btn-lg px-5">
+            <i class="bi bi-magic me-2"></i>Ir a Realizar Predicciones
+        </a>
+    </div>
+
+    {% endif %}
+
+</div>
+
+<!-- ═══ JAVASCRIPT: Interactividad del formulario ════════════════════════════ -->
+<script>
+    const targetSelect = document.getElementById('target-select');
+
+    // Cuando el usuario cambia el target, deshabilitar ese checkbox de features
+    targetSelect.addEventListener('change', function() {
+        const targetVal = this.value;
+        document.querySelectorAll('.feature-check-item').forEach(item => {
+            const col = item.getAttribute('data-col');
+            const checkbox = item.querySelector('input[type=checkbox]');
+            if (col === targetVal) {
+                checkbox.checked = false;
+                checkbox.disabled = true;
+                item.classList.add('disabled-target');
+            } else {
+                checkbox.disabled = false;
+                item.classList.remove('disabled-target');
+            }
+        });
+    });
+
+    function selectAllFeatures() {
+        const targetVal = targetSelect.value;
+        document.querySelectorAll('.feature-check').forEach(cb => {
+            if (cb.value !== targetVal) {
+                cb.checked = true;
+                cb.disabled = false;
+                cb.closest('.feature-check-item').classList.remove('disabled-target');
+            }
+        });
+    }
+
+    function deselectAllFeatures() {
+        document.querySelectorAll('.feature-check').forEach(cb => {
+            if (!cb.disabled) cb.checked = false;
+        });
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

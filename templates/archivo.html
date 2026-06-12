@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paso 1: Cargar Dataset CSV - Proyecto Final IA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <style>
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .step-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.35rem 0.85rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .step-pill.active {
+            background: #eef2ff;
+            color: #4338ca;
+            border: 1.5px solid #c7d2fe;
+        }
+        .step-pill.inactive {
+            background: #f8fafc;
+            color: #94a3b8;
+            border: 1.5px solid #e2e8f0;
+        }
+        .step-arrow { color: #cbd5e1; font-size: 0.9rem; }
+
+        .drop-zone {
+            border: 2px dashed #c7d2fe;
+            border-radius: 14px;
+            padding: 2.5rem;
+            text-align: center;
+            background: #f8faff;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .drop-zone:hover {
+            border-color: #4f46e5;
+            background: #eef2ff;
+        }
+        .drop-zone input[type="file"] {
+            display: none;
+        }
+        .stat-mini {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            text-align: center;
+        }
+        .stat-mini .val {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #4f46e5;
+        }
+        .stat-mini .lbl {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-5 pb-5">
+
+    <!-- Indicador de pasos -->
+    <div class="step-indicator flex-wrap">
+        <span class="step-pill active"><i class="bi bi-upload"></i> Paso 1: Cargar Dataset</span>
+        <span class="step-arrow"><i class="bi bi-chevron-right"></i></span>
+        <span class="step-pill inactive"><i class="bi bi-cpu"></i> Paso 2: Entrenar</span>
+        <span class="step-arrow"><i class="bi bi-chevron-right"></i></span>
+        <span class="step-pill inactive"><i class="bi bi-magic"></i> Paso 3: Predecir</span>
+    </div>
+
+    <!-- ═══ FORMULARIO DE CARGA ══════════════════════════════════════════════ -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h1 class="mb-0 fs-3">
+                <i class="bi bi-file-earmark-arrow-up-fill me-2 text-gradient"></i>
+                Cargar Archivo CSV
+            </h1>
+            <a href="/" class="btn btn-dark btn-sm">
+                <i class="bi bi-house-door me-1"></i>Inicio
+            </a>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-4">
+                Sube tu dataset en formato CSV. La aplicación detectará automáticamente las columnas,
+                codificará las variables categóricas y preparará los datos para el entrenamiento.
+            </p>
+
+            <form method="POST" enctype="multipart/form-data" id="upload-form">
+                <div class="drop-zone mb-4" id="drop-zone" onclick="document.getElementById('file-input').click()">
+                    <input type="file" name="archivo" id="file-input" accept=".csv" required onchange="updateFileName(this)">
+                    <i class="bi bi-cloud-upload-fill fs-1 text-primary mb-2 d-block"></i>
+                    <div class="fw-semibold text-primary mb-1" id="file-label">Haz clic para seleccionar un archivo .CSV</div>
+                    <div class="text-muted small">o arrastra y suelta aquí · Máximo 50 MB</div>
+                </div>
+
+                <div class="d-flex gap-2 justify-content-end">
+                    <button type="submit" class="btn btn-primary px-5" id="btn-upload">
+                        <i class="bi bi-cloud-upload-fill me-2"></i>Cargar Dataset
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══ RESULTADO Y VISTA PREVIA ═════════════════════════════════════════ -->
+    {% if nombre_archivo %}
+
+    <div class="alert alert-success d-flex align-items-center gap-3" role="alert">
+        <i class="bi bi-check-circle-fill fs-4"></i>
+        <div>
+            <strong>¡Dataset cargado exitosamente!</strong>
+            El archivo <code>{{ nombre_archivo }}</code> ya está disponible para entrenar.
+        </div>
+    </div>
+
+    <!-- Estadísticas del dataset -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2 class="mb-0 fs-4">
+                <i class="bi bi-bar-chart-fill me-2 text-info"></i>
+                Resumen del Dataset
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-md-4">
+                    <div class="stat-mini">
+                        <div class="val">{{ filas }}</div>
+                        <div class="lbl">Filas (registros)</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4">
+                    <div class="stat-mini">
+                        <div class="val">{{ columnas }}</div>
+                        <div class="lbl">Columnas (variables)</div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="stat-mini">
+                        <div class="val" style="font-size:1rem; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;" title="{{ nombre_archivo }}">
+                            {{ nombre_archivo }}
+                        </div>
+                        <div class="lbl">Nombre del archivo</div>
+                    </div>
+                </div>
+            </div>
+
+            {% if columnas_lista %}
+            <div class="mb-4">
+                <div class="fw-semibold mb-2 text-muted small text-uppercase">Variables detectadas:</div>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for col in columnas_lista %}
+                    <span class="badge rounded-pill" style="background:#eef2ff; color:#4338ca; font-size:0.8rem; font-weight:500; padding:0.4rem 0.8rem; border:1px solid #c7d2fe;">
+                        {{ col }}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="d-flex gap-2 justify-content-end">
+                <a href="/entrenar_csv" class="btn btn-success btn-lg px-5">
+                    <i class="bi bi-cpu-fill me-2"></i>
+                    Continuar → Entrenar Modelo
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vista previa de datos -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="mb-0 fs-4">
+                <i class="bi bi-table me-2 text-gradient"></i>
+                Vista Previa (primeras 10 filas)
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                {{ tabla|safe }}
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+
+</div>
+
+<script>
+    function updateFileName(input) {
+        const label = document.getElementById('file-label');
+        if (input.files && input.files[0]) {
+            label.textContent = '✓ Archivo seleccionado: ' + input.files[0].name;
+            label.style.color = '#16a34a';
+        }
+    }
+
+    // Drag and drop
+    const dropZone = document.getElementById('drop-zone');
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '#4f46e5';
+        dropZone.style.background = '#eef2ff';
+    });
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.style.borderColor = '#c7d2fe';
+        dropZone.style.background = '#f8faff';
+    });
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (file && file.name.endsWith('.csv')) {
+            const input = document.getElementById('file-input');
+            // Asignar archivo vía DataTransfer
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            input.files = dt.files;
+            updateFileName(input);
+        }
+        dropZone.style.borderColor = '#c7d2fe';
+        dropZone.style.background = '#f8faff';
+    });
+</script>
+</body>
+</html>

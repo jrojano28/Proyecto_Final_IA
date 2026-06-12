@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IA Generativa - Proyecto Final IA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <style>
+        .section-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            border-radius: 999px;
+            padding: 0.3rem 0.9rem;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+        .badge-generated  { background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; }
+        .badge-corrected  { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+        .badge-understood { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+
+        .ia-card {
+            border-radius: 16px;
+            border: 1.5px solid #e2e8f0;
+            transition: box-shadow 0.25s;
+        }
+        .ia-card:hover { box-shadow: 0 8px 30px rgba(79,70,229,0.08); }
+
+        .code-chip {
+            display: inline-block;
+            background: #1e293b;
+            color: #7dd3fc;
+            border-radius: 6px;
+            padding: 0.15rem 0.55rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            margin: 0.15rem;
+        }
+        .prompt-box {
+            background: #0f172a;
+            border-left: 4px solid #6366f1;
+            border-radius: 0 10px 10px 0;
+            padding: 0.85rem 1.1rem;
+            color: #e2e8f0;
+            font-style: italic;
+            font-size: 0.88rem;
+            margin-top: 0.6rem;
+        }
+        .timeline-step {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px dashed #e2e8f0;
+        }
+        .timeline-step:last-child { border-bottom: none; }
+        .timeline-num {
+            width: 32px; height: 32px;
+            background: #4f46e5; color: white;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-5 pb-5" style="max-width: 860px;">
+
+    <!-- ─── ENCABEZADO ─────────────────────────────────── -->
+    <div class="text-center mb-5">
+        <div class="section-badge badge-generated" style="font-size:0.9rem; padding:0.5rem 1.2rem;">
+            <i class="bi bi-robot"></i> Documentación de IA Generativa
+        </div>
+        <h1 class="display-6 fw-bold mb-2">Uso de <span class="text-gradient">IA Generativa</span> en el Proyecto</h1>
+        <p class="text-muted lead">Esta página documenta de forma transparente qué fue generado por IA,<br>
+            qué fue corregido manualmente y qué aprendimos en el proceso.</p>
+    </div>
+
+    <!-- ─── HERRAMIENTAS USADAS ────────────────────────── -->
+    <div class="card ia-card mb-4">
+        <div class="card-header bg-dark text-white fw-bold">
+            <i class="bi bi-tools me-2 text-warning"></i>Herramientas de IA utilizadas
+        </div>
+        <div class="card-body">
+            <div class="row g-3 text-center">
+                <div class="col-md-4">
+                    <div class="p-3 rounded-3 bg-light h-100">
+                        <i class="bi bi-chat-dots-fill fs-2 text-primary mb-2 d-block"></i>
+                        <div class="fw-bold">Antigravity (Google DeepMind)</div>
+                        <small class="text-muted">Generación de estructura, lógica Flask y templates HTML base</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 rounded-3 bg-light h-100">
+                        <i class="bi bi-lightning-fill fs-2 text-success mb-2 d-block"></i>
+                        <div class="fw-bold">ChatGPT (OpenAI)</div>
+                        <small class="text-muted">Consultas sobre scikit-learn, preprocesamiento de datos y manejo de errores</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 rounded-3 bg-light h-100">
+                        <i class="bi bi-search fs-2 text-info mb-2 d-block"></i>
+                        <div class="fw-bold">Google / Documentación</div>
+                        <small class="text-muted">Verificación de APIs de scikit-learn, pandas y Flask</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── QUÉ FUE GENERADO ──────────────────────────── -->
+    <div class="card ia-card mb-4">
+        <div class="card-header bg-dark text-white fw-bold">
+            <i class="bi bi-stars me-2 text-primary"></i>¿Qué fue GENERADO por IA?
+        </div>
+        <div class="card-body">
+            <div class="section-badge badge-generated"><i class="bi bi-magic"></i> Generado automáticamente</div>
+
+            <div class="timeline-step">
+                <div class="timeline-num">1</div>
+                <div>
+                    <div class="fw-bold">Estructura base del proyecto Flask</div>
+                    <small class="text-muted">Se solicitó a la IA crear la organización de carpetas
+                        (<span class="code-chip">app.py</span>, <span class="code-chip">templates/</span>,
+                        <span class="code-chip">static/</span>, <span class="code-chip">utils/</span>,
+                        <span class="code-chip">models/</span>) y el archivo <span class="code-chip">requirements.txt</span>.</small>
+                    <div class="prompt-box">
+                        "Crea la estructura de un proyecto Flask para una app de Machine Learning que permita
+                        cargar un CSV, entrenar un modelo de regresión logística y hacer predicciones."
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-step">
+                <div class="timeline-num">2</div>
+                <div>
+                    <div class="fw-bold">Código de entrenamiento en <span class="code-chip">app.py</span></div>
+                    <small class="text-muted">Las funciones <span class="code-chip">entrenar()</span> y
+                        <span class="code-chip">entrenar_csv()</span> fueron generadas inicialmente por IA con el pipeline
+                        básico: carga → split → entrenamiento → métricas.</small>
+                    <div class="prompt-box">
+                        "Escribe una ruta Flask que cargue el dataset Iris, lo divida 80/20, entrene un
+                        LogisticRegression, calcule accuracy, precision, recall, F1 y genere la matriz de
+                        confusión como imagen PNG."
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-step">
+                <div class="timeline-num">3</div>
+                <div>
+                    <div class="fw-bold">Templates HTML con Bootstrap 5</div>
+                    <small class="text-muted">Los esqueletos de <span class="code-chip">index.html</span>,
+                        <span class="code-chip">entrenar_csv.html</span> y <span class="code-chip">prediccion.html</span>
+                        fueron generados por IA y luego personalizados.</small>
+                    <div class="prompt-box">
+                        "Crea un template HTML con Bootstrap 5 que muestre las métricas de un modelo de ML
+                        en cards, con una tabla de coeficientes y la matriz de confusión."
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-step">
+                <div class="timeline-num">4</div>
+                <div>
+                    <div class="fw-bold">Estilos CSS premium (<span class="code-chip">style.css</span>)</div>
+                    <small class="text-muted">La paleta de colores oscura, el efecto glassmorphism, las micro-animaciones
+                        y el diseño de cards fueron sugeridos e implementados inicialmente por IA.</small>
+                    <div class="prompt-box">
+                        "Crea un CSS dark-mode premium con gradientes, efectos hover suaves y tipografía
+                        moderna para una aplicación educativa de Machine Learning."
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-step">
+                <div class="timeline-num">5</div>
+                <div>
+                    <div class="fw-bold">Lógica de preprocesamiento genérico de CSV</div>
+                    <small class="text-muted">El código que detecta automáticamente columnas categóricas,
+                        aplica <span class="code-chip">LabelEncoder</span> y maneja valores nulos fue propuesto por la IA.</small>
+                    <div class="prompt-box">
+                        "Escribe código Python que dado un DataFrame detecte automáticamente columnas categóricas
+                        y numéricas, aplique LabelEncoder a las categóricas y rellene nulos con la mediana en las numéricas."
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── QUÉ FUE CORREGIDO ─────────────────────────── -->
+    <div class="card ia-card mb-4">
+        <div class="card-header bg-dark text-white fw-bold">
+            <i class="bi bi-wrench-adjustable me-2 text-danger"></i>¿Qué fue CORREGIDO manualmente?
+        </div>
+        <div class="card-body">
+            <div class="section-badge badge-corrected"><i class="bi bi-pencil"></i> Corregido por el estudiante</div>
+
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item">
+                    <i class="bi bi-x-circle-fill text-danger me-2"></i>
+                    <strong>Error de backend sin GUI (matplotlib):</strong>
+                    <span class="text-muted ms-1">La IA generó código de matplotlib que fallaba en Flask porque intentaba
+                    abrir una ventana gráfica. Se corrigió agregando <span class="code-chip">matplotlib.use('Agg')</span>
+                    antes de importar pyplot.</span>
+                </li>
+                <li class="list-group-item">
+                    <i class="bi bi-x-circle-fill text-danger me-2"></i>
+                    <strong>Targets numéricos continuos mal manejados:</strong>
+                    <span class="text-muted ms-1">La IA generó código que fallaba cuando el usuario seleccionaba una
+                    columna target con valores continuos (flotantes). Se agregó lógica para detectar este caso con
+                    <span class="code-chip">type_of_target()</span> y convertirla automáticamente a categorías usando
+                    <span class="code-chip">pd.cut()</span>.</span>
+                </li>
+                <li class="list-group-item">
+                    <i class="bi bi-x-circle-fill text-danger me-2"></i>
+                    <strong>Pérdida de estado al recargar la página:</strong>
+                    <span class="text-muted ms-1">El modelo entrenado se perdía al recargar <code>/entrenar_csv</code>.
+                    Se corrigió guardando todas las métricas, coeficientes y metadatos en archivos
+                    <span class="code-chip">.pkl</span> con joblib y releyéndolos en GET.</span>
+                </li>
+                <li class="list-group-item">
+                    <i class="bi bi-x-circle-fill text-danger me-2"></i>
+                    <strong>Inconsistencias al cambiar dataset CSV:</strong>
+                    <span class="text-muted ms-1">Al cargar un nuevo CSV, los modelos del dataset anterior quedaban
+                    activos y causaban errores de predicción. Se añadió limpieza automática de archivos
+                    <span class="code-chip">.pkl</span> al subir un nuevo archivo.</span>
+                </li>
+                <li class="list-group-item">
+                    <i class="bi bi-x-circle-fill text-danger me-2"></i>
+                    <strong>Coeficientes multiclase mal visualizados:</strong>
+                    <span class="text-muted ms-1">La IA generaba la matriz de coeficientes completa (una fila por clase)
+                    pero la visualizaba incorrectamente. Se corrigió tomando el promedio del valor absoluto
+                    (<span class="code-chip">np.mean(np.abs(modelo.coef_), axis=0)</span>) para Iris,
+                    y <span class="code-chip">modelo.coef_[0]</span> para CSV binario.</span>
+                </li>
+                <li class="list-group-item">
+                    <i class="bi bi-x-circle-fill text-danger me-2"></i>
+                    <strong>Formulario de predicción con valores desconocidos:</strong>
+                    <span class="text-muted ms-1">Si el usuario ingresaba una categoría no vista durante entrenamiento,
+                    el <span class="code-chip">LabelEncoder</span> lanzaba un error. Se agregó un bloque
+                    try/except que mapea el valor desconocido a la primera clase conocida del encoder.</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ─── QUÉ SE COMPRENDIÓ ─────────────────────────── -->
+    <div class="card ia-card mb-4">
+        <div class="card-header bg-dark text-white fw-bold">
+            <i class="bi bi-lightbulb-fill me-2 text-warning"></i>¿Qué COMPRENDÍ durante el proceso?
+        </div>
+        <div class="card-body">
+            <div class="section-badge badge-understood"><i class="bi bi-mortarboard"></i> Aprendizaje del estudiante</div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="p-3 rounded-3 border h-100">
+                        <i class="bi bi-diagram-3-fill text-primary fs-4 mb-2 d-block"></i>
+                        <div class="fw-bold mb-1">Regresión Logística como clasificador</div>
+                        <small class="text-muted">Comprendí que a pesar del nombre "regresión", el modelo usa la función
+                        sigmoide para mapear una combinación lineal de variables a una probabilidad de clase.
+                        Los coeficientes indican cuánto influye cada variable en la decisión.</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3 rounded-3 border h-100">
+                        <i class="bi bi-shuffle text-success fs-4 mb-2 d-block"></i>
+                        <div class="fw-bold mb-1">División train/test y su importancia</div>
+                        <small class="text-muted">Entendí por qué separar el 20% de datos para prueba es fundamental:
+                        evaluar con los mismos datos de entrenamiento daría métricas artificialmente altas (overfitting).
+                        El conjunto de test simula datos nuevos del mundo real.</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3 rounded-3 border h-100">
+                        <i class="bi bi-grid-3x3 text-danger fs-4 mb-2 d-block"></i>
+                        <div class="fw-bold mb-1">Interpretación de la Matriz de Confusión</div>
+                        <small class="text-muted">Aprendí que la diagonal principal representa predicciones correctas.
+                        Los valores fuera de la diagonal son errores: los de la columna son falsos positivos
+                        y los de la fila son falsos negativos.</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3 rounded-3 border h-100">
+                        <i class="bi bi-funnel-fill text-warning fs-4 mb-2 d-block"></i>
+                        <div class="fw-bold mb-1">Preprocesamiento de datos real</div>
+                        <small class="text-muted">Comprendí que los datos reales rara vez están listos para el modelo.
+                        El manejo de nulos, la codificación de categorías y la conversión de tipos son pasos
+                        esenciales del pipeline, tan importantes como el entrenamiento mismo.</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3 rounded-3 border h-100">
+                        <i class="bi bi-bar-chart-fill text-info fs-4 mb-2 d-block"></i>
+                        <div class="fw-bold mb-1">Diferencia entre Accuracy, Precision y Recall</div>
+                        <small class="text-muted">Comprendí que el accuracy puede ser engañoso en datasets desbalanceados.
+                        Precision mide cuántas de las predicciones positivas son realmente positivas,
+                        mientras que Recall mide cuántos positivos reales fueron detectados.</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3 rounded-3 border h-100">
+                        <i class="bi bi-robot text-purple fs-4 mb-2 d-block" style="color:#8b5cf6"></i>
+                        <div class="fw-bold mb-1">Uso crítico de la IA generativa</div>
+                        <small class="text-muted">La IA acelera el desarrollo pero no reemplaza el entendimiento.
+                        Cada bug corregido me obligó a leer la documentación real de scikit-learn y entender
+                        por qué fallaba el código generado, lo que profundizó mi comprensión real del tema.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── REFLEXIÓN FINAL ───────────────────────────── -->
+    <div class="alert alert-primary d-flex gap-3 align-items-start" role="alert">
+        <i class="bi bi-quote fs-3 flex-shrink-0"></i>
+        <div>
+            <strong>Reflexión final:</strong> Utilizar IA generativa en este proyecto nos permitió avanzar más rápido en
+            la implementación, pero el aprendizaje real ocurrió al tener que entender, depurar y corregir el código generado.
+            La IA fue un punto de partida, no el destino. Cada corrección realizada nos obligó a comprender más profundamente
+            los conceptos de Machine Learning, el pipeline de datos y la arquitectura web.
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+        <a href="/" class="btn btn-dark"><i class="bi bi-house-door me-1"></i>Inicio</a>
+        <a href="/acerca" class="btn btn-primary"><i class="bi bi-book me-1"></i>Acerca del Proyecto</a>
+    </div>
+
+</div>
+</body>
+</html>
