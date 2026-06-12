@@ -7,7 +7,7 @@
 
 ## 🌐 Demo en vivo
 
-🔗 **URL del despliegue:** _[Pendiente — se actualizará tras el despliegue en Render]_
+🔗 **URL del despliegue:** [https://proyecto-final-ia-pfnx.onrender.com](https://proyecto-final-ia-pfnx.onrender.com)
 
 🐙 **Repositorio GitHub:** [https://github.com/jrojano28/Proyecto_Final_IA](https://github.com/jrojano28/Proyecto_Final_IA)
 
