@@ -147,85 +147,77 @@ def entrenar():
 
     # ─── GRÁFICA 0: Matriz de confusión ───
     matriz = confusion_matrix(y_test, predicciones)
-    plt.figure(figsize=(6, 5))
-    plt.imshow(matriz, interpolation='nearest', cmap=plt.cm.Blues)
-    plt.title("Matriz de Confusión - Iris")
-    plt.colorbar()
+    fig, ax = plt.subplots(figsize=(5, 4))
+    ax.imshow(matriz, interpolation='nearest', cmap=plt.cm.Blues)
+    ax.set_title("Matriz de Confusión - Iris")
     tick_marks = range(len(clases_iris))
-    plt.xticks(tick_marks, clases_iris, rotation=45)
-    plt.yticks(tick_marks, clases_iris)
-    plt.xlabel("Predicción")
-    plt.ylabel("Valor Real")
+    ax.set_xticks(list(tick_marks)); ax.set_xticklabels(clases_iris, rotation=45)
+    ax.set_yticks(list(tick_marks)); ax.set_yticklabels(clases_iris)
+    ax.set_xlabel("Predicción"); ax.set_ylabel("Valor Real")
     for i in range(len(matriz)):
         for j in range(len(matriz)):
-            plt.text(j, i, str(matriz[i, j]), ha="center", va="center",
-                     color="white" if matriz[i, j] > matriz.max() / 2.0 else "black")
-    plt.tight_layout()
-    plt.savefig("static/matriz.png", bbox_inches='tight', dpi=90)
-    plt.close()
+            ax.text(j, i, str(matriz[i, j]), ha="center", va="center",
+                    color="white" if matriz[i, j] > matriz.max() / 2.0 else "black")
+    fig.tight_layout()
+    fig.savefig("static/matriz.png", bbox_inches='tight', dpi=80)
+    plt.close(fig); del fig, ax, matriz
     gc.collect()
 
     # ─── GRÁFICA 1: Curva Sigmoide ───
-    z = np.linspace(-8, 8, 300)
+    z = np.linspace(-8, 8, 150)  # 150 puntos en vez de 300 — igual de suave, menos memoria
     sigmoid = 1 / (1 + np.exp(-z))
-    plt.figure(figsize=(7, 4))
-    plt.plot(z, sigmoid, color='#4f46e5', linewidth=2.5, label='σ(z) = 1 / (1 + e⁻ᶻ)')
-    plt.axhline(0.5, color='#ef4444', linestyle='--', linewidth=1.5, label='Umbral de decisión (0.5)')
-    plt.axvline(0, color='#94a3b8', linestyle=':', linewidth=1)
-    plt.fill_between(z, sigmoid, 0.5, where=(sigmoid > 0.5), alpha=0.12, color='#4f46e5', label='Zona clase positiva')
-    plt.fill_between(z, sigmoid, 0.5, where=(sigmoid < 0.5), alpha=0.12, color='#ef4444', label='Zona clase negativa')
-    plt.xlabel('z = β₀ + β₁x₁ + ... + βₙxₙ', fontsize=11)
-    plt.ylabel('Probabilidad P(y=1)', fontsize=11)
-    plt.title('Función Sigmoide — Corazón de la Regresión Logística', fontsize=12, fontweight='bold')
-    plt.legend(fontsize=9)
-    plt.grid(True, alpha=0.3)
-    plt.tight_layout()
-    plt.savefig("static/grafica_sigmoide.png", bbox_inches='tight', dpi=90)
-    plt.close()
+    fig, ax = plt.subplots(figsize=(5, 3))
+    ax.plot(z, sigmoid, color='#4f46e5', linewidth=2, label='σ(z)')
+    ax.axhline(0.5, color='#ef4444', linestyle='--', linewidth=1.2, label='Umbral 0.5')
+    ax.axvline(0,   color='#94a3b8', linestyle=':',  linewidth=1)
+    ax.fill_between(z, sigmoid, 0.5, where=(sigmoid > 0.5), alpha=0.1, color='#4f46e5')
+    ax.fill_between(z, sigmoid, 0.5, where=(sigmoid < 0.5), alpha=0.1, color='#ef4444')
+    ax.set_xlabel('z = β₀ + β₁x₁ + ...'); ax.set_ylabel('P(y=1)')
+    ax.set_title('Función Sigmoide — Regresión Logística', fontweight='bold')
+    ax.legend(fontsize=8); ax.grid(True, alpha=0.3)
+    fig.tight_layout()
+    fig.savefig("static/grafica_sigmoide.png", bbox_inches='tight', dpi=80)
+    plt.close(fig); del fig, ax, z, sigmoid
     gc.collect()
 
     # ─── GRÁFICA 2: Scatter Plot Petal Length vs Petal Width ───
     colores = ['#f97316', '#4f46e5', '#10b981']
-    plt.figure(figsize=(7, 5))
+    fig, ax = plt.subplots(figsize=(5, 4))
     for cls, color, nombre in zip([0, 1, 2], colores, clases_iris):
         idx = y == cls
-        plt.scatter(X[idx, 2], X[idx, 3], c=color, label=nombre, alpha=0.75,
-                    edgecolors='white', linewidth=0.5, s=65)
-    plt.axhline(0.8,  color='#f97316', linestyle='--', linewidth=1.5, alpha=0.7, label='Frontera Setosa')
-    plt.axvline(4.75, color='#4f46e5', linestyle='--', linewidth=1.5, alpha=0.7, label='Frontera Versicolor/Virginica')
-    plt.xlabel('Petal Length (cm)', fontsize=11)
-    plt.ylabel('Petal Width (cm)', fontsize=11)
-    plt.title('Dispersión de Clases — Iris\n(Petal Length vs Petal Width)', fontsize=12, fontweight='bold')
-    plt.legend(fontsize=9)
-    plt.grid(True, alpha=0.25)
-    plt.tight_layout()
-    plt.savefig("static/grafica_dispersion.png", bbox_inches='tight', dpi=90)
-    plt.close()
+        ax.scatter(X[idx, 2], X[idx, 3], c=color, label=nombre, alpha=0.7,
+                   edgecolors='white', linewidth=0.3, s=40)
+    ax.axhline(0.8,  color='#f97316', linestyle='--', linewidth=1.2, alpha=0.6)
+    ax.axvline(4.75, color='#4f46e5', linestyle='--', linewidth=1.2, alpha=0.6)
+    ax.set_xlabel('Petal Length (cm)'); ax.set_ylabel('Petal Width (cm)')
+    ax.set_title('Dispersión — Iris (Petal Length vs Width)', fontweight='bold')
+    ax.legend(fontsize=8); ax.grid(True, alpha=0.2)
+    fig.tight_layout()
+    fig.savefig("static/grafica_dispersion.png", bbox_inches='tight', dpi=80)
+    plt.close(fig); del fig, ax
     gc.collect()
 
-    # ─── GRÁFICA 3: Curva de Aprendizaje ───
-    train_sizes = np.linspace(0.1, 1.0, 10)
+    # ─── GRÁFICA 3: Curva de Aprendizaje (5 pasos en vez de 10 para ahorrar RAM) ───
+    train_sizes = np.linspace(0.2, 1.0, 5)  # 5 pasos: suficiente para ver la curva
     train_acc_vals, test_acc_vals, sizes_label = [], [], []
     for size in train_sizes:
-        n = max(int(size * len(X_train)), 6)
-        m_tmp = LogisticRegression(max_iter=200)
+        n = max(int(size * len(X_train)), 4)
+        m_tmp = LogisticRegression(max_iter=150, solver='liblinear')  # solver liviano
         m_tmp.fit(X_train[:n], y_train[:n])
         train_acc_vals.append(accuracy_score(y_train[:n], m_tmp.predict(X_train[:n])) * 100)
         test_acc_vals.append(accuracy_score(y_test, m_tmp.predict(X_test)) * 100)
         sizes_label.append(n)
-    plt.figure(figsize=(7, 4))
-    plt.plot(sizes_label, train_acc_vals, 'o-', color='#4f46e5', linewidth=2, markersize=6, label='Accuracy Entrenamiento')
-    plt.plot(sizes_label, test_acc_vals,  's--', color='#10b981', linewidth=2, markersize=6, label='Accuracy Prueba')
-    plt.fill_between(sizes_label, train_acc_vals, test_acc_vals, alpha=0.08, color='#f97316', label='Brecha generalización')
-    plt.xlabel('Número de muestras de entrenamiento', fontsize=11)
-    plt.ylabel('Accuracy (%)', fontsize=11)
-    plt.title('Curva de Aprendizaje — Regresión Logística (Iris)', fontsize=12, fontweight='bold')
-    plt.legend(fontsize=9)
-    plt.ylim([50, 105])
-    plt.grid(True, alpha=0.3)
-    plt.tight_layout()
-    plt.savefig("static/grafica_aprendizaje.png", bbox_inches='tight', dpi=90)
-    plt.close()
+        del m_tmp  # liberar el modelo temporal inmediatamente
+    fig, ax = plt.subplots(figsize=(5, 3))
+    ax.plot(sizes_label, train_acc_vals, 'o-', color='#4f46e5', linewidth=2, markersize=5, label='Entrenamiento')
+    ax.plot(sizes_label, test_acc_vals,  's--', color='#10b981', linewidth=2, markersize=5, label='Prueba')
+    ax.fill_between(sizes_label, train_acc_vals, test_acc_vals, alpha=0.08, color='#f97316')
+    ax.set_xlabel('Muestras de entrenamiento'); ax.set_ylabel('Accuracy (%)')
+    ax.set_title('Curva de Aprendizaje — Iris', fontweight='bold')
+    ax.legend(fontsize=8); ax.set_ylim([50, 105]); ax.grid(True, alpha=0.3)
+    fig.tight_layout()
+    fig.savefig("static/grafica_aprendizaje.png", bbox_inches='tight', dpi=80)
+    plt.close(fig); del fig, ax, train_sizes, train_acc_vals, test_acc_vals, sizes_label
     gc.collect()
 
     return render_template(
@@ -610,44 +602,43 @@ def entrenar_csv():
                 gc.collect()
                 print(f"Error generando gráfica de dispersión CSV: {e}")
 
-            # ─── GRÁFICA 3: Curva de Aprendizaje para CSV ───
+            # ─── GRÁFICA 3: Curva de Aprendizaje para CSV (5 pasos, solver liviano) ───
             try:
-                train_sizes = np.linspace(0.1, 1.0, 10)
+                train_sizes = np.linspace(0.2, 1.0, 5)  # 5 pasos en vez de 10
                 train_acc_vals, test_acc_vals, sizes_label = [], [], []
                 for size in train_sizes:
-                    n = max(int(size * len(X_train)), 6)
+                    n = max(int(size * len(X_train)), 4)
                     n = min(n, len(X_train))
                     if n < 2:
                         continue
-                    
                     try:
-                        m_tmp = LogisticRegression(max_iter=1000)
+                        m_tmp = LogisticRegression(max_iter=300, solver='liblinear')
                         m_tmp.fit(X_train[:n], y_train[:n])
                         train_acc_vals.append(accuracy_score(y_train[:n], m_tmp.predict(X_train[:n])) * 100)
                         test_acc_vals.append(accuracy_score(y_test, m_tmp.predict(X_test)) * 100)
                         sizes_label.append(n)
+                        del m_tmp  # liberar inmediatamente
                     except Exception:
                         if train_acc_vals:
                             train_acc_vals.append(train_acc_vals[-1])
                             test_acc_vals.append(test_acc_vals[-1])
                             sizes_label.append(n)
-                
+
                 if len(sizes_label) >= 2:
-                    plt.figure(figsize=(7, 4))
-                    plt.plot(sizes_label, train_acc_vals, 'o-', color='#4f46e5', linewidth=2, markersize=6, label='Accuracy Entrenamiento')
-                    plt.plot(sizes_label, test_acc_vals,  's--', color='#10b981', linewidth=2, markersize=6, label='Accuracy Prueba')
-                    plt.fill_between(sizes_label, train_acc_vals, test_acc_vals, alpha=0.08, color='#f97316', label='Brecha generalización')
-                    plt.xlabel('Número de muestras de entrenamiento', fontsize=11)
-                    plt.ylabel('Accuracy (%)', fontsize=11)
-                    plt.title('Curva de Aprendizaje — Regresión Logística (CSV)', fontsize=12, fontweight='bold')
-                    plt.legend(fontsize=9)
-                    plt.grid(True, alpha=0.3)
-                    plt.tight_layout()
-                    plt.savefig("static/grafica_aprendizaje_csv.png", bbox_inches='tight', dpi=90)
-                    plt.close()
+                    fig, ax = plt.subplots(figsize=(5, 3))
+                    ax.plot(sizes_label, train_acc_vals, 'o-', color='#4f46e5', linewidth=2, markersize=5, label='Entrenamiento')
+                    ax.plot(sizes_label, test_acc_vals,  's--', color='#10b981', linewidth=2, markersize=5, label='Prueba')
+                    ax.fill_between(sizes_label, train_acc_vals, test_acc_vals, alpha=0.08, color='#f97316')
+                    ax.set_xlabel('Muestras de entrenamiento'); ax.set_ylabel('Accuracy (%)')
+                    ax.set_title('Curva de Aprendizaje — CSV', fontweight='bold')
+                    ax.legend(fontsize=8); ax.grid(True, alpha=0.3)
+                    fig.tight_layout()
+                    fig.savefig("static/grafica_aprendizaje_csv.png", bbox_inches='tight', dpi=80)
+                    plt.close(fig)
+                    del fig, ax, train_sizes, train_acc_vals, test_acc_vals, sizes_label
                     gc.collect()
             except Exception as e:
-                plt.close()
+                plt.close('all')
                 gc.collect()
                 print(f"Error generando curva de aprendizaje CSV: {e}")
         finally:
