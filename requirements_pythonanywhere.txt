@@ -1,0 +1,5 @@
+# PythonAnywhere ya tiene pre-instalado: flask, numpy, scipy, scikit-learn,
+# matplotlib, pandas, pillow, jinja2, werkzeug, etc.
+# Solo instalar lo que falta:
+joblib
+narwhals
