@@ -32,6 +32,9 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # Needed for flash messages
 
+import threading
+matplotlib_lock = threading.Lock()
+
 
 # ─────────────────────────────────────────────
 # RUTA: Inicio / Dashboard principal
@@ -107,38 +110,31 @@ def dataset_wine():
 def entrenar():
     """
     Entrena un clasificador de Regresión Logística sobre el dataset Iris.
-    Calcula métricas, genera la matriz de confusión y guarda el modelo.
+    Calcula métricas, genera la matriz de confusión y gráficos adicionales.
     """
 
     iris = load_iris()
-
     X = iris.data
     y = iris.target
     feature_names = iris.feature_names
+    clases_iris = ["setosa", "versicolor", "virginica"]
 
-    # División 80% entrenamiento / 20% prueba
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
-    )
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    # Entrenamiento del modelo de Regresión Logística
     modelo = LogisticRegression(max_iter=200)
     modelo.fit(X_train, y_train)
 
     os.makedirs("models", exist_ok=True)
+    os.makedirs("static", exist_ok=True)
     joblib.dump(modelo, "models/modelo_iris.pkl")
 
-    # Predicciones sobre el conjunto de prueba
     predicciones = modelo.predict(X_test)
-
-    # ─── Métricas de evaluación ───
     accuracy  = accuracy_score(y_test, predicciones)
     precision = precision_score(y_test, predicciones, average="weighted", zero_division=0)
     recall    = recall_score(y_test, predicciones, average="weighted", zero_division=0)
     f1        = f1_score(y_test, predicciones, average="weighted", zero_division=0)
 
     # ─── Coeficientes del modelo ───
-    # Para multiclase, tomamos el promedio del valor absoluto de cada feature
     avg_coef = np.mean(np.abs(modelo.coef_), axis=0)
     coeficientes = [
         {"variable": name, "coeficiente": round(float(c), 4)}
@@ -146,10 +142,8 @@ def entrenar():
     ]
     intercepto = [round(float(i), 4) for i in modelo.intercept_]
 
-    # ─── Matriz de confusión ───
+    # ─── GRÁFICA 0: Matriz de confusión ───
     matriz = confusion_matrix(y_test, predicciones)
-    clases_iris = ["setosa", "versicolor", "virginica"]
-
     plt.figure(figsize=(6, 5))
     plt.imshow(matriz, interpolation='nearest', cmap=plt.cm.Blues)
     plt.title("Matriz de Confusión - Iris")
@@ -161,13 +155,70 @@ def entrenar():
     plt.ylabel("Valor Real")
     for i in range(len(matriz)):
         for j in range(len(matriz)):
-            plt.text(
-                j, i, str(matriz[i, j]),
-                ha="center", va="center",
-                color="white" if matriz[i, j] > matriz.max() / 2.0 else "black"
-            )
-    os.makedirs("static", exist_ok=True)
+            plt.text(j, i, str(matriz[i, j]), ha="center", va="center",
+                     color="white" if matriz[i, j] > matriz.max() / 2.0 else "black")
+    plt.tight_layout()
     plt.savefig("static/matriz.png", bbox_inches='tight')
+    plt.close()
+
+    # ─── GRÁFICA 1: Curva Sigmoide ───
+    z = np.linspace(-8, 8, 300)
+    sigmoid = 1 / (1 + np.exp(-z))
+    plt.figure(figsize=(7, 4))
+    plt.plot(z, sigmoid, color='#4f46e5', linewidth=2.5, label='σ(z) = 1 / (1 + e⁻ᶻ)')
+    plt.axhline(0.5, color='#ef4444', linestyle='--', linewidth=1.5, label='Umbral de decisión (0.5)')
+    plt.axvline(0, color='#94a3b8', linestyle=':', linewidth=1)
+    plt.fill_between(z, sigmoid, 0.5, where=(sigmoid > 0.5), alpha=0.12, color='#4f46e5', label='Zona clase positiva')
+    plt.fill_between(z, sigmoid, 0.5, where=(sigmoid < 0.5), alpha=0.12, color='#ef4444', label='Zona clase negativa')
+    plt.xlabel('z = β₀ + β₁x₁ + ... + βₙxₙ', fontsize=11)
+    plt.ylabel('Probabilidad P(y=1)', fontsize=11)
+    plt.title('Función Sigmoide — Corazón de la Regresión Logística', fontsize=12, fontweight='bold')
+    plt.legend(fontsize=9)
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig("static/grafica_sigmoide.png", bbox_inches='tight', dpi=120)
+    plt.close()
+
+    # ─── GRÁFICA 2: Scatter Plot Petal Length vs Petal Width ───
+    colores = ['#f97316', '#4f46e5', '#10b981']
+    plt.figure(figsize=(7, 5))
+    for cls, color, nombre in zip([0, 1, 2], colores, clases_iris):
+        idx = y == cls
+        plt.scatter(X[idx, 2], X[idx, 3], c=color, label=nombre, alpha=0.75,
+                    edgecolors='white', linewidth=0.5, s=65)
+    plt.axhline(0.8,  color='#f97316', linestyle='--', linewidth=1.5, alpha=0.7, label='Frontera Setosa')
+    plt.axvline(4.75, color='#4f46e5', linestyle='--', linewidth=1.5, alpha=0.7, label='Frontera Versicolor/Virginica')
+    plt.xlabel('Petal Length (cm)', fontsize=11)
+    plt.ylabel('Petal Width (cm)', fontsize=11)
+    plt.title('Dispersión de Clases — Iris\n(Petal Length vs Petal Width)', fontsize=12, fontweight='bold')
+    plt.legend(fontsize=9)
+    plt.grid(True, alpha=0.25)
+    plt.tight_layout()
+    plt.savefig("static/grafica_dispersion.png", bbox_inches='tight', dpi=120)
+    plt.close()
+
+    # ─── GRÁFICA 3: Curva de Aprendizaje ───
+    train_sizes = np.linspace(0.1, 1.0, 10)
+    train_acc_vals, test_acc_vals, sizes_label = [], [], []
+    for size in train_sizes:
+        n = max(int(size * len(X_train)), 6)
+        m_tmp = LogisticRegression(max_iter=200)
+        m_tmp.fit(X_train[:n], y_train[:n])
+        train_acc_vals.append(accuracy_score(y_train[:n], m_tmp.predict(X_train[:n])) * 100)
+        test_acc_vals.append(accuracy_score(y_test, m_tmp.predict(X_test)) * 100)
+        sizes_label.append(n)
+    plt.figure(figsize=(7, 4))
+    plt.plot(sizes_label, train_acc_vals, 'o-', color='#4f46e5', linewidth=2, markersize=6, label='Accuracy Entrenamiento')
+    plt.plot(sizes_label, test_acc_vals,  's--', color='#10b981', linewidth=2, markersize=6, label='Accuracy Prueba')
+    plt.fill_between(sizes_label, train_acc_vals, test_acc_vals, alpha=0.08, color='#f97316', label='Brecha generalización')
+    plt.xlabel('Número de muestras de entrenamiento', fontsize=11)
+    plt.ylabel('Accuracy (%)', fontsize=11)
+    plt.title('Curva de Aprendizaje — Regresión Logística (Iris)', fontsize=12, fontweight='bold')
+    plt.legend(fontsize=9)
+    plt.ylim([50, 105])
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig("static/grafica_aprendizaje.png", bbox_inches='tight', dpi=120)
     plt.close()
 
     return render_template(
@@ -458,31 +509,135 @@ def entrenar_csv():
         else:
             clases_labels = sorted(list(set(list(y_test) + list(predicciones))))
 
-        plt.figure(figsize=(max(5, len(clases_labels)), max(4, len(clases_labels) - 1)))
-        plt.imshow(matriz, interpolation='nearest', cmap=plt.cm.Blues)
-        plt.title("Matriz de Confusión")
-        plt.colorbar()
+        matplotlib_lock.acquire()
+        try:
+            plt.figure(figsize=(max(5, len(clases_labels)), max(4, len(clases_labels) - 1)))
+            plt.imshow(matriz, interpolation='nearest', cmap=plt.cm.Blues)
+            plt.title("Matriz de Confusión")
+            plt.colorbar()
 
-        if len(clases_labels) <= 12:
-            tick_marks = range(len(clases_labels))
-            plt.xticks(tick_marks, clases_labels, rotation=45, ha='right')
-            plt.yticks(tick_marks, clases_labels)
+            if len(clases_labels) <= 12:
+                tick_marks = range(len(clases_labels))
+                plt.xticks(tick_marks, clases_labels, rotation=45, ha='right')
+                plt.yticks(tick_marks, clases_labels)
 
-        plt.xlabel("Predicción")
-        plt.ylabel("Valor Real")
+            plt.xlabel("Predicción")
+            plt.ylabel("Valor Real")
 
-        if len(matriz) <= 15:
-            for i in range(len(matriz)):
-                for j in range(len(matriz)):
-                    plt.text(
-                        j, i, str(matriz[i, j]),
-                        ha="center", va="center",
-                        color="white" if matriz[i, j] > matriz.max() / 2.0 else "black"
-                    )
+            if len(matriz) <= 15:
+                for i in range(len(matriz)):
+                    for j in range(len(matriz)):
+                        plt.text(
+                            j, i, str(matriz[i, j]),
+                            ha="center", va="center",
+                            color="white" if matriz[i, j] > matriz.max() / 2.0 else "black"
+                        )
 
-        os.makedirs("static", exist_ok=True)
-        plt.savefig("static/matriz_csv.png", bbox_inches='tight')
-        plt.close()
+            os.makedirs("static", exist_ok=True)
+            plt.savefig("static/matriz_csv.png", bbox_inches='tight')
+            plt.close()
+
+            # ─── GRÁFICA 1: Curva Sigmoide para CSV ───
+            try:
+                z = np.linspace(-8, 8, 300)
+                sigmoid = 1 / (1 + np.exp(-z))
+                plt.figure(figsize=(7, 4))
+                plt.plot(z, sigmoid, color='#4f46e5', linewidth=2.5, label='σ(z) = 1 / (1 + e⁻ᶻ)')
+                plt.axhline(0.5, color='#ef4444', linestyle='--', linewidth=1.5, label='Umbral de decisión (0.5)')
+                plt.axvline(0, color='#94a3b8', linestyle=':', linewidth=1)
+                plt.fill_between(z, sigmoid, 0.5, where=(sigmoid > 0.5), alpha=0.12, color='#4f46e5', label='Zona clase positiva')
+                plt.fill_between(z, sigmoid, 0.5, where=(sigmoid < 0.5), alpha=0.12, color='#ef4444', label='Zona clase negativa')
+                plt.xlabel('z = β₀ + β₁x₁ + ... + βₙxₙ', fontsize=11)
+                plt.ylabel('Probabilidad P(y=1)', fontsize=11)
+                plt.title('Función Sigmoide — Regresión Logística', fontsize=12, fontweight='bold')
+                plt.legend(fontsize=9)
+                plt.grid(True, alpha=0.3)
+                plt.tight_layout()
+                plt.savefig("static/grafica_sigmoide_csv.png", bbox_inches='tight', dpi=120)
+                plt.close()
+            except Exception as e:
+                plt.close()
+                print(f"Error generando curva sigmoide CSV: {e}")
+
+            # ─── GRÁFICA 2: Dispersión de Clases para CSV ───
+            try:
+                plt.figure(figsize=(7, 5))
+                feat_x = predictoras[0]
+                feat_y = predictoras[1] if len(predictoras) > 1 else predictoras[0]
+                
+                unique_classes = sorted(list(set(y)))
+                colores_disp = ['#f97316', '#4f46e5', '#10b981', '#a855f7', '#ec4899', '#06b6d4', '#eab308']
+                
+                for idx_c, cls_val in enumerate(unique_classes):
+                    idx = (y == cls_val)
+                    color = colores_disp[idx_c % len(colores_disp)]
+                    
+                    if encoder_target is not None:
+                        nombre_clase = encoder_target.inverse_transform([cls_val])[0]
+                    else:
+                        nombre_clase = f"Clase {cls_val}"
+                    
+                    if len(predictoras) == 1:
+                        x_vals = X.loc[idx, feat_x].values
+                        y_vals = np.array([cls_val] * len(x_vals)) + np.random.normal(0, 0.08, len(x_vals))
+                        plt.scatter(x_vals, y_vals, c=color, label=str(nombre_clase), alpha=0.75,
+                                    edgecolors='white', linewidth=0.5, s=65)
+                    else:
+                        plt.scatter(X.loc[idx, feat_x].values, X.loc[idx, feat_y].values, c=color, label=str(nombre_clase), alpha=0.75,
+                                    edgecolors='white', linewidth=0.5, s=65)
+                
+                plt.xlabel(feat_x, fontsize=11)
+                plt.ylabel(feat_y if len(predictoras) > 1 else f"{target} (con jitter)", fontsize=11)
+                plt.title(f'Dispersión de Clases — CSV\n({feat_x} vs {feat_y if len(predictoras) > 1 else target})', fontsize=12, fontweight='bold')
+                plt.legend(fontsize=9)
+                plt.grid(True, alpha=0.25)
+                plt.tight_layout()
+                plt.savefig("static/grafica_dispersion_csv.png", bbox_inches='tight', dpi=120)
+                plt.close()
+            except Exception as e:
+                plt.close()
+                print(f"Error generando gráfica de dispersión CSV: {e}")
+
+            # ─── GRÁFICA 3: Curva de Aprendizaje para CSV ───
+            try:
+                train_sizes = np.linspace(0.1, 1.0, 10)
+                train_acc_vals, test_acc_vals, sizes_label = [], [], []
+                for size in train_sizes:
+                    n = max(int(size * len(X_train)), 6)
+                    n = min(n, len(X_train))
+                    if n < 2:
+                        continue
+                    
+                    try:
+                        m_tmp = LogisticRegression(max_iter=1000)
+                        m_tmp.fit(X_train[:n], y_train[:n])
+                        train_acc_vals.append(accuracy_score(y_train[:n], m_tmp.predict(X_train[:n])) * 100)
+                        test_acc_vals.append(accuracy_score(y_test, m_tmp.predict(X_test)) * 100)
+                        sizes_label.append(n)
+                    except Exception:
+                        if train_acc_vals:
+                            train_acc_vals.append(train_acc_vals[-1])
+                            test_acc_vals.append(test_acc_vals[-1])
+                            sizes_label.append(n)
+                
+                if len(sizes_label) >= 2:
+                    plt.figure(figsize=(7, 4))
+                    plt.plot(sizes_label, train_acc_vals, 'o-', color='#4f46e5', linewidth=2, markersize=6, label='Accuracy Entrenamiento')
+                    plt.plot(sizes_label, test_acc_vals,  's--', color='#10b981', linewidth=2, markersize=6, label='Accuracy Prueba')
+                    plt.fill_between(sizes_label, train_acc_vals, test_acc_vals, alpha=0.08, color='#f97316', label='Brecha generalización')
+                    plt.xlabel('Número de muestras de entrenamiento', fontsize=11)
+                    plt.ylabel('Accuracy (%)', fontsize=11)
+                    plt.title('Curva de Aprendizaje — Regresión Logística (CSV)', fontsize=12, fontweight='bold')
+                    plt.legend(fontsize=9)
+                    plt.grid(True, alpha=0.3)
+                    plt.tight_layout()
+                    plt.savefig("static/grafica_aprendizaje_csv.png", bbox_inches='tight', dpi=120)
+                    plt.close()
+            except Exception as e:
+                plt.close()
+                print(f"Error generando curva de aprendizaje CSV: {e}")
+        finally:
+            matplotlib_lock.release()
 
         # Procesar coeficientes para visualización educativa
         if modelo.coef_.ndim == 2:

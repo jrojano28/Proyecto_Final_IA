@@ -18,13 +18,13 @@
     <div class="card shadow mb-4">
         <div class="card-header bg-dark d-flex justify-content-between align-items-center">
             <h2 class="mb-0 fs-3 text-gradient"><i class="bi bi-info-circle-fill me-2"></i>Acerca del Proyecto</h2>
-            <span class="badge bg-primary">V1.0</span>
+            <span class="badge bg-primary">V2.0</span>
         </div>
 
         <div class="card-body">
             <h4>Descripción del Sistema</h4>
             <p class="text-muted">
-                Esta aplicación web fue diseñada como solución de fin de curso para la asignatura de Inteligencia Artificial. Ofrece una infraestructura genérica que permite cargar conjuntos de datos en formato CSV, imputar de forma automatizada valores nulos, codificar variables textuales/categóricas, y entrenar clasificadores de Machine Learning basados en la Regresión Logística.
+                Esta aplicación web fue diseñada como solución de fin de curso para la asignatura de Inteligencia Artificial. Ofrece una infraestructura genérica que permite cargar conjuntos de datos en formato CSV, imputar de forma automatizada valores nulos, codificar variables categóricas, y entrenar clasificadores basados en la Regresión Logística.
             </p>
 
             <hr>
@@ -36,26 +36,28 @@
                 <span class="badge bg-dark border border-secondary p-2"><i class="bi bi-file-earmark-spreadsheet text-success me-1"></i> Pandas (Data Science)</span>
                 <span class="badge bg-dark border border-secondary p-2"><i class="bi bi-gear-fill text-danger me-1"></i> Scikit-Learn (ML Engine)</span>
                 <span class="badge bg-dark border border-secondary p-2"><i class="bi bi-bar-chart-fill text-info me-1"></i> Matplotlib (Visualization)</span>
-                <span class="badge bg-dark border border-secondary p-2"><i class="bi bi-brush text-gradient me-1"></i> Custom CSS Grid Layouts</span>
+                <span class="badge bg-dark border border-secondary p-2"><i class="bi bi-lock-fill text-warning me-1"></i> Thread Safety (Locks)</span>
             </div>
 
             <hr>
 
-            <h4>Modelos e Inferencia</h4>
+            <h4>Pipeline de Datos e Inferencia</h4>
             <ul class="text-muted">
-                <li><strong>Regresión Logística:</strong> Un clasificador estadístico lineal adecuado para modelar variables categóricas mediante la función sigmoide.</li>
-                <li><strong>Codificación Dinámica:</strong> Implementa transformaciones a través de <code>LabelEncoder</code> que mapean texto a valores numéricos enteros, guardando y persistiendo los mapeos en archivos serializados (<code>.pkl</code>) para inferencias futuras.</li>
+                <li><strong>Regresión Logística:</strong> Clasificador estadístico lineal adecuado para modelar clases mediante la función sigmoide y umbrales de decisión.</li>
+                <li><strong>Imputación Inteligente:</strong> Relleno automático de valores nulos (mediana para numéricas, moda para categóricas) y discretización automática mediante <code>pd.cut()</code> para variables objetivo continuas.</li>
+                <li><strong>Persistencia de Estado (joblib):</strong> Serialización en disco (archivos <code>.pkl</code>) para cargar el modelo, los codificadores y las variables dinámicamente y predecir sin perder estado al recargar la web.</li>
+                <li><strong>Thread Safety (Seguridad en Concurrencia):** Implementa un Thread Lock (<code>matplotlib_lock</code>) para procesar de forma secuencial y segura las peticiones concurrentes de generación de gráficos, evitando conflictos y bloqueos de Matplotlib.</li>
             </ul>
 
             <hr>
 
-            <h4>Métricas de Evaluación Reportadas</h4>
+            <h4>Visualizaciones y Métricas Generadas</h4>
             <ul class="text-muted">
-                <li><strong>Accuracy:</strong> Porcentaje total de predicciones correctas sobre el conjunto de test.</li>
-                <li><strong>Precision:</strong> Capacidad del modelo para evitar falsos positivos (ponderación por clase).</li>
-                <li><strong>Recall:</strong> Capacidad del modelo para identificar todas las instancias positivas (sensibilidad).</li>
-                <li><strong>F1 Score:</strong> Media armónica entre Precision y Recall.</li>
-                <li><strong>Matriz de Confusión:</strong> Representación bidimensional de predicciones estimadas frente a los valores reales.</li>
+                <li><strong>Función Sigmoide:</strong> Gráfica demostrativa sobre el mapeo probabilístico y el umbral de decisión del modelo.</li>
+                <li><strong>Dispersión de Clases:</strong> Gráfico bidimensional dinámico con las características predictoras seleccionadas (con jitter en 1D para evitar superposiciones).</li>
+                <li><strong>Curva de Aprendizaje:</strong> Gráfico lineal que compara la exactitud de entrenamiento frente a la de prueba a medida que aumentan los datos, permitiendo diagnosticar sobreajuste.</li>
+                <li><strong>Matriz de Confusión:</strong> Comparativa visual directa entre predicciones y clases reales de validación.</li>
+                <li><strong>Métricas de Precisión:</strong> Cálculo de Exactitud (Accuracy), Precisión (Precision), Sensibilidad (Recall) y Valor F1 (F1 Score) con ponderaciones balanceadas.</li>
             </ul>
         </div>
     </div>

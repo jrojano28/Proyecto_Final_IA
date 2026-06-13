@@ -76,6 +76,12 @@
             margin-top: 0.35rem;
             line-height: 1.4;
         }
+        .chart-card { border-radius: 14px; border: 1.5px solid #e2e8f0; overflow: hidden; background: #ffffff; margin-bottom: 1rem; transition: box-shadow .2s; }
+        .chart-card:hover { box-shadow: 0 6px 24px rgba(79,70,229,.1); }
+        .chart-card img { width: 100%; object-fit: contain; }
+        .chart-label { font-size: .78rem; font-weight: 700; text-transform: uppercase;
+                       letter-spacing: .05em; color: #64748b; padding: .6rem 1rem;
+                       background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
     </style>
 </head>
 <body>
@@ -338,27 +344,106 @@
         </div>
     </div>
 
-    <!-- Matriz de Confusión -->
+    <!-- Visualizaciones del Modelo -->
     <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h3 class="mb-0 fs-4"><i class="bi bi-grid-3x3-gap-fill me-2 text-gradient"></i>Matriz de Confusión</h3>
-            <a href="/matriz_csv" class="btn btn-dark btn-sm" target="_blank">
-                <i class="bi bi-fullscreen me-1"></i>Pantalla Completa
-            </a>
+            <h3 class="mb-0 fs-4"><i class="bi bi-bar-chart-line-fill me-2 text-gradient"></i>Visualizaciones del Modelo</h3>
         </div>
-        <div class="card-body text-center">
-            <div class="alert alert-info py-2 text-start mb-4">
-                <i class="bi bi-info-circle-fill me-2"></i>
-                La diagonal principal (de arriba-izquierda a abajo-derecha) muestra los aciertos del modelo.
-                Los valores fuera de la diagonal son los errores de clasificación.
-            </div>
-            <div class="d-inline-block p-2 bg-dark rounded-3 border border-secondary">
-                <img
-                    src="{{ url_for('static', filename='matriz_csv.png') }}?t={{ range(1,100000)|random }}"
-                    class="img-fluid border"
-                    alt="Matriz de Confusión"
-                    style="max-width:500px; width:100%; border-radius:8px;"
-                >
+        <div class="card-body">
+            <div class="row g-4">
+
+                <!-- Gráfica 1: Función Sigmoide -->
+                <div class="col-12 col-md-6">
+                    <div class="chart-card">
+                        <div class="chart-label"><i class="bi bi-graph-up me-1"></i>Función Sigmoide (Curva Logística)</div>
+                        <div class="p-2 text-center">
+                            <img
+                                src="{{ url_for('static', filename='grafica_sigmoide_csv.png') }}?t={{ range(1,100000)|random }}"
+                                class="img-fluid"
+                                alt="Curva Sigmoide"
+                                style="max-height: 280px; object-fit: contain;"
+                            >
+                        </div>
+                        <div class="p-3 bg-light border-top small text-muted">
+                            La función sigmoide transforma cualquier valor de entrada en una probabilidad entre 0 y 1.
+                            El umbral de decisión en 0.5 determina la clase predicha.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráfica 2: Dispersión de Clases -->
+                <div class="col-12 col-md-6">
+                    <div class="chart-card">
+                        <div class="chart-label"><i class="bi bi-scatter-chart me-1"></i>Dispersión de Clases</div>
+                        <div class="p-2 text-center">
+                            <img
+                                src="{{ url_for('static', filename='grafica_dispersion_csv.png') }}?t={{ range(1,100000)|random }}"
+                                class="img-fluid"
+                                alt="Dispersión de Clases"
+                                style="max-height: 280px; object-fit: contain;"
+                                id="dispersion-img"
+                                onerror="this.style.display='none'; document.getElementById('dispersion-placeholder').style.display='block';"
+                            >
+                            <div id="dispersion-placeholder" class="py-5 text-center text-muted" style="display:none; min-height: 200px;">
+                                <i class="bi bi-image fs-1 d-block mb-2 text-secondary"></i>
+                                No se pudo generar la gráfica de dispersión.
+                            </div>
+                        </div>
+                        <div class="p-3 bg-light border-top small text-muted">
+                            Muestra la distribución de los datos según las dos primeras variables predictoras seleccionadas, coloreadas por su clase real.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráfica 3: Curva de Aprendizaje -->
+                <div class="col-12 col-md-6">
+                    <div class="chart-card">
+                        <div class="chart-label"><i class="bi bi-activity me-1"></i>Curva de Aprendizaje</div>
+                        <div class="p-2 text-center">
+                            <img
+                                src="{{ url_for('static', filename='grafica_aprendizaje_csv.png') }}?t={{ range(1,100000)|random }}"
+                                class="img-fluid"
+                                alt="Curva de Aprendizaje"
+                                style="max-height: 280px; object-fit: contain;"
+                                id="aprendizaje-img"
+                                onerror="this.style.display='none'; document.getElementById('aprendizaje-placeholder').style.display='block';"
+                            >
+                            <div id="aprendizaje-placeholder" class="py-5 text-center text-muted" style="display:none; min-height: 200px;">
+                                <i class="bi bi-image fs-1 d-block mb-2 text-secondary"></i>
+                                El dataset es demasiado pequeño para generar una curva de aprendizaje.
+                            </div>
+                        </div>
+                        <div class="p-3 bg-light border-top small text-muted">
+                            Muestra cómo mejora el accuracy a medida que el modelo dispone de más datos de entrenamiento.
+                            La brecha indica el grado de sobreajuste.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráfica 4: Matriz de Confusión -->
+                <div class="col-12 col-md-6">
+                    <div class="chart-card">
+                        <div class="chart-label d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-grid-3x3-gap-fill me-1"></i>Matriz de Confusión</span>
+                            <a href="/matriz_csv" class="btn btn-outline-secondary btn-sm py-0 px-2" target="_blank" style="font-size: 0.75rem; border-radius: 4px;">
+                                <i class="bi bi-fullscreen"></i>
+                            </a>
+                        </div>
+                        <div class="p-2 text-center">
+                            <img
+                                src="{{ url_for('static', filename='matriz_csv.png') }}?t={{ range(1,100000)|random }}"
+                                class="img-fluid"
+                                alt="Matriz de Confusión"
+                                style="max-height: 280px; object-fit: contain;"
+                            >
+                        </div>
+                        <div class="p-3 bg-light border-top small text-muted">
+                            La diagonal principal muestra los aciertos del modelo. Los valores fuera de ella representan
+                            clasificaciones erróneas entre clases.
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
