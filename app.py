@@ -25,8 +25,11 @@ from sklearn.metrics import (
 import matplotlib
 matplotlib.use('Agg')  # Backend sin GUI, necesario para Flask (evita errores de tkinter en hilos)
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+mpl.rcParams['figure.max_open_warning'] = 0  # Suprimir advertencias de figuras abiertas
 import joblib
 import os
+import gc  # Garbage collector para liberar memoria en servidores con recursos limitados
 from flask import Flask, render_template, request, redirect, url_for, flash
 
 app = Flask(__name__)
@@ -158,8 +161,9 @@ def entrenar():
             plt.text(j, i, str(matriz[i, j]), ha="center", va="center",
                      color="white" if matriz[i, j] > matriz.max() / 2.0 else "black")
     plt.tight_layout()
-    plt.savefig("static/matriz.png", bbox_inches='tight')
+    plt.savefig("static/matriz.png", bbox_inches='tight', dpi=90)
     plt.close()
+    gc.collect()
 
     # ─── GRÁFICA 1: Curva Sigmoide ───
     z = np.linspace(-8, 8, 300)
@@ -176,8 +180,9 @@ def entrenar():
     plt.legend(fontsize=9)
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
-    plt.savefig("static/grafica_sigmoide.png", bbox_inches='tight', dpi=120)
+    plt.savefig("static/grafica_sigmoide.png", bbox_inches='tight', dpi=90)
     plt.close()
+    gc.collect()
 
     # ─── GRÁFICA 2: Scatter Plot Petal Length vs Petal Width ───
     colores = ['#f97316', '#4f46e5', '#10b981']
@@ -194,8 +199,9 @@ def entrenar():
     plt.legend(fontsize=9)
     plt.grid(True, alpha=0.25)
     plt.tight_layout()
-    plt.savefig("static/grafica_dispersion.png", bbox_inches='tight', dpi=120)
+    plt.savefig("static/grafica_dispersion.png", bbox_inches='tight', dpi=90)
     plt.close()
+    gc.collect()
 
     # ─── GRÁFICA 3: Curva de Aprendizaje ───
     train_sizes = np.linspace(0.1, 1.0, 10)
@@ -218,8 +224,9 @@ def entrenar():
     plt.ylim([50, 105])
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
-    plt.savefig("static/grafica_aprendizaje.png", bbox_inches='tight', dpi=120)
+    plt.savefig("static/grafica_aprendizaje.png", bbox_inches='tight', dpi=90)
     plt.close()
+    gc.collect()
 
     return render_template(
         "entrenar.html",
@@ -534,8 +541,9 @@ def entrenar_csv():
                         )
 
             os.makedirs("static", exist_ok=True)
-            plt.savefig("static/matriz_csv.png", bbox_inches='tight')
+            plt.savefig("static/matriz_csv.png", bbox_inches='tight', dpi=90)
             plt.close()
+            gc.collect()
 
             # ─── GRÁFICA 1: Curva Sigmoide para CSV ───
             try:
@@ -553,10 +561,12 @@ def entrenar_csv():
                 plt.legend(fontsize=9)
                 plt.grid(True, alpha=0.3)
                 plt.tight_layout()
-                plt.savefig("static/grafica_sigmoide_csv.png", bbox_inches='tight', dpi=120)
+                plt.savefig("static/grafica_sigmoide_csv.png", bbox_inches='tight', dpi=90)
                 plt.close()
+                gc.collect()
             except Exception as e:
                 plt.close()
+                gc.collect()
                 print(f"Error generando curva sigmoide CSV: {e}")
 
             # ─── GRÁFICA 2: Dispersión de Clases para CSV ───
@@ -592,10 +602,12 @@ def entrenar_csv():
                 plt.legend(fontsize=9)
                 plt.grid(True, alpha=0.25)
                 plt.tight_layout()
-                plt.savefig("static/grafica_dispersion_csv.png", bbox_inches='tight', dpi=120)
+                plt.savefig("static/grafica_dispersion_csv.png", bbox_inches='tight', dpi=90)
                 plt.close()
+                gc.collect()
             except Exception as e:
                 plt.close()
+                gc.collect()
                 print(f"Error generando gráfica de dispersión CSV: {e}")
 
             # ─── GRÁFICA 3: Curva de Aprendizaje para CSV ───
@@ -631,13 +643,16 @@ def entrenar_csv():
                     plt.legend(fontsize=9)
                     plt.grid(True, alpha=0.3)
                     plt.tight_layout()
-                    plt.savefig("static/grafica_aprendizaje_csv.png", bbox_inches='tight', dpi=120)
+                    plt.savefig("static/grafica_aprendizaje_csv.png", bbox_inches='tight', dpi=90)
                     plt.close()
+                    gc.collect()
             except Exception as e:
                 plt.close()
+                gc.collect()
                 print(f"Error generando curva de aprendizaje CSV: {e}")
         finally:
             matplotlib_lock.release()
+            gc.collect()  # Liberar toda la memoria al terminar el bloque de gráficas
 
         # Procesar coeficientes para visualización educativa
         if modelo.coef_.ndim == 2:
