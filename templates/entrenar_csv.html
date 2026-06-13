@@ -350,23 +350,28 @@
             <h3 class="mb-0 fs-4"><i class="bi bi-bar-chart-line-fill me-2 text-gradient"></i>Visualizaciones del Modelo</h3>
         </div>
         <div class="card-body">
+            <div class="alert alert-info py-2 mb-3" style="font-size:0.83rem;">
+                <i class="bi bi-info-circle-fill me-1"></i>
+                Las gráficas se generan <strong>de una en una</strong> para no saturar el servidor.
+                Haz clic en <strong>Generar</strong> en cada tarjeta.
+            </div>
             <div class="row g-4">
 
                 <!-- Gráfica 1: Función Sigmoide -->
                 <div class="col-12 col-md-6">
                     <div class="chart-card">
-                        <div class="chart-label"><i class="bi bi-graph-up me-1"></i>Función Sigmoide (Curva Logística)</div>
-                        <div class="p-2 text-center">
-                            <img
-                                src="{{ url_for('static', filename='grafica_sigmoide_csv.png') }}?t={{ range(1,100000)|random }}"
-                                class="img-fluid"
-                                alt="Curva Sigmoide"
-                                style="max-height: 280px; object-fit: contain;"
-                            >
+                        <div class="chart-label d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-graph-up me-1"></i>Función Sigmoide</span>
+                            <button class="btn btn-primary btn-sm py-0 px-2" style="font-size:.75rem;" onclick="generarGrafica('sigmoide_csv', 'grafica_sigmoide_csv.png', this)">
+                                <i class="bi bi-play-fill me-1"></i>Generar
+                            </button>
+                        </div>
+                        <div id="img-sigmoide_csv" class="py-5 text-center text-muted">
+                            <i class="bi bi-graph-up fs-1 d-block mb-2 text-secondary"></i>
+                            Haz clic en Generar
                         </div>
                         <div class="p-3 bg-light border-top small text-muted">
                             La función sigmoide transforma cualquier valor de entrada en una probabilidad entre 0 y 1.
-                            El umbral de decisión en 0.5 determina la clase predicha.
                         </div>
                     </div>
                 </div>
@@ -374,23 +379,18 @@
                 <!-- Gráfica 2: Dispersión de Clases -->
                 <div class="col-12 col-md-6">
                     <div class="chart-card">
-                        <div class="chart-label"><i class="bi bi-scatter-chart me-1"></i>Dispersión de Clases</div>
-                        <div class="p-2 text-center">
-                            <img
-                                src="{{ url_for('static', filename='grafica_dispersion_csv.png') }}?t={{ range(1,100000)|random }}"
-                                class="img-fluid"
-                                alt="Dispersión de Clases"
-                                style="max-height: 280px; object-fit: contain;"
-                                id="dispersion-img"
-                                onerror="this.style.display='none'; document.getElementById('dispersion-placeholder').style.display='block';"
-                            >
-                            <div id="dispersion-placeholder" class="py-5 text-center text-muted" style="display:none; min-height: 200px;">
-                                <i class="bi bi-image fs-1 d-block mb-2 text-secondary"></i>
-                                No se pudo generar la gráfica de dispersión.
-                            </div>
+                        <div class="chart-label d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-scatter-chart me-1"></i>Dispersión de Clases</span>
+                            <button class="btn btn-primary btn-sm py-0 px-2" style="font-size:.75rem;" onclick="generarGrafica('dispersion_csv', 'grafica_dispersion_csv.png', this)">
+                                <i class="bi bi-play-fill me-1"></i>Generar
+                            </button>
+                        </div>
+                        <div id="img-dispersion_csv" class="py-5 text-center text-muted">
+                            <i class="bi bi-scatter-chart fs-1 d-block mb-2 text-secondary"></i>
+                            Haz clic en Generar
                         </div>
                         <div class="p-3 bg-light border-top small text-muted">
-                            Muestra la distribución de los datos según las dos primeras variables predictoras seleccionadas, coloreadas por su clase real.
+                            Distribución de los datos según las dos primeras variables predictoras seleccionadas.
                         </div>
                     </div>
                 </div>
@@ -398,24 +398,18 @@
                 <!-- Gráfica 3: Curva de Aprendizaje -->
                 <div class="col-12 col-md-6">
                     <div class="chart-card">
-                        <div class="chart-label"><i class="bi bi-activity me-1"></i>Curva de Aprendizaje</div>
-                        <div class="p-2 text-center">
-                            <img
-                                src="{{ url_for('static', filename='grafica_aprendizaje_csv.png') }}?t={{ range(1,100000)|random }}"
-                                class="img-fluid"
-                                alt="Curva de Aprendizaje"
-                                style="max-height: 280px; object-fit: contain;"
-                                id="aprendizaje-img"
-                                onerror="this.style.display='none'; document.getElementById('aprendizaje-placeholder').style.display='block';"
-                            >
-                            <div id="aprendizaje-placeholder" class="py-5 text-center text-muted" style="display:none; min-height: 200px;">
-                                <i class="bi bi-image fs-1 d-block mb-2 text-secondary"></i>
-                                El dataset es demasiado pequeño para generar una curva de aprendizaje.
-                            </div>
+                        <div class="chart-label d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-activity me-1"></i>Curva de Aprendizaje</span>
+                            <button class="btn btn-primary btn-sm py-0 px-2" style="font-size:.75rem;" onclick="generarGrafica('aprendizaje_csv', 'grafica_aprendizaje_csv.png', this)">
+                                <i class="bi bi-play-fill me-1"></i>Generar
+                            </button>
+                        </div>
+                        <div id="img-aprendizaje_csv" class="py-5 text-center text-muted">
+                            <i class="bi bi-activity fs-1 d-block mb-2 text-secondary"></i>
+                            Haz clic en Generar
                         </div>
                         <div class="p-3 bg-light border-top small text-muted">
-                            Muestra cómo mejora el accuracy a medida que el modelo dispone de más datos de entrenamiento.
-                            La brecha indica el grado de sobreajuste.
+                            Muestra cómo mejora el accuracy a medida que el modelo dispone de más datos.
                         </div>
                     </div>
                 </div>
@@ -425,21 +419,16 @@
                     <div class="chart-card">
                         <div class="chart-label d-flex justify-content-between align-items-center">
                             <span><i class="bi bi-grid-3x3-gap-fill me-1"></i>Matriz de Confusión</span>
-                            <a href="/matriz_csv" class="btn btn-outline-secondary btn-sm py-0 px-2" target="_blank" style="font-size: 0.75rem; border-radius: 4px;">
-                                <i class="bi bi-fullscreen"></i>
-                            </a>
+                            <button class="btn btn-primary btn-sm py-0 px-2" style="font-size:.75rem;" onclick="generarGrafica('matriz_csv_gen', 'matriz_csv.png', this)">
+                                <i class="bi bi-play-fill me-1"></i>Generar
+                            </button>
                         </div>
-                        <div class="p-2 text-center">
-                            <img
-                                src="{{ url_for('static', filename='matriz_csv.png') }}?t={{ range(1,100000)|random }}"
-                                class="img-fluid"
-                                alt="Matriz de Confusión"
-                                style="max-height: 280px; object-fit: contain;"
-                            >
+                        <div id="img-matriz_csv_gen" class="py-5 text-center text-muted">
+                            <i class="bi bi-grid-3x3-gap-fill fs-1 d-block mb-2 text-secondary"></i>
+                            Haz clic en Generar
                         </div>
                         <div class="p-3 bg-light border-top small text-muted">
-                            La diagonal principal muestra los aciertos del modelo. Los valores fuera de ella representan
-                            clasificaciones erróneas entre clases.
+                            La diagonal principal muestra los aciertos. Los valores fuera representan errores.
                         </div>
                     </div>
                 </div>
@@ -447,6 +436,34 @@
             </div>
         </div>
     </div>
+
+    <script>
+    function generarGrafica(nombre, archivo, btn) {
+        const contenedor = document.getElementById('img-' + nombre);
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" style="width:.8rem;height:.8rem;"></span>Generando...';
+        contenedor.innerHTML = '<div class="py-4 text-center"><div class="spinner-border text-primary" role="status"></div><div class="small text-muted mt-2">Generando gráfica, espera...</div></div>';
+        fetch('/grafica/' + nombre)
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) {
+                    const ts = Date.now();
+                    contenedor.innerHTML = '<img src="/static/' + archivo + '?t=' + ts + '" class="img-fluid p-2" alt="' + nombre + '">';
+                    btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i>Regenerar';
+                    btn.classList.remove('btn-primary'); btn.classList.add('btn-outline-secondary');
+                } else {
+                    contenedor.innerHTML = '<div class="p-3 text-danger small"><i class="bi bi-exclamation-triangle me-1"></i>' + (data.error || 'Error desconocido') + '</div>';
+                    btn.innerHTML = '<i class="bi bi-play-fill me-1"></i>Reintentar';
+                }
+                btn.disabled = false;
+            })
+            .catch(() => {
+                contenedor.innerHTML = '<div class="p-3 text-danger small"><i class="bi bi-wifi-off me-1"></i>Error de conexión</div>';
+                btn.innerHTML = '<i class="bi bi-play-fill me-1"></i>Reintentar';
+                btn.disabled = false;
+            });
+    }
+    </script>
 
     <div class="d-flex justify-content-center mb-5">
         <a href="/prediccion" class="btn btn-primary btn-lg px-5">

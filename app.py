@@ -107,6 +107,123 @@ def dataset_wine():
 
 
 # ─────────────────────────────────────────────
+# RUTAS: Generación individual de gráficas Iris
+# (cada una genera UNA sola imagen → menos RAM)
+# ─────────────────────────────────────────────
+
+@app.route("/grafica/sigmoide_iris")
+def grafica_sigmoide_iris():
+    try:
+        z = np.linspace(-8, 8, 80)
+        sigmoid = 1 / (1 + np.exp(-z))
+        fig, ax = plt.subplots(figsize=(5, 3))
+        ax.plot(z, sigmoid, color='#4f46e5', linewidth=2, label='σ(z)')
+        ax.axhline(0.5, color='#ef4444', linestyle='--', linewidth=1.2, label='Umbral 0.5')
+        ax.axvline(0,   color='#94a3b8', linestyle=':',  linewidth=1)
+        ax.fill_between(z, sigmoid, 0.5, where=(sigmoid > 0.5), alpha=0.1, color='#4f46e5')
+        ax.fill_between(z, sigmoid, 0.5, where=(sigmoid < 0.5), alpha=0.1, color='#ef4444')
+        ax.set_xlabel('z = β₀ + β₁x₁ + ...'); ax.set_ylabel('P(y=1)')
+        ax.set_title('Función Sigmoide — Regresión Logística', fontweight='bold')
+        ax.legend(fontsize=8); ax.grid(True, alpha=0.3)
+        fig.tight_layout()
+        os.makedirs("static", exist_ok=True)
+        fig.savefig("static/grafica_sigmoide.png", bbox_inches='tight', dpi=80)
+        plt.close(fig); del fig, ax, z, sigmoid; gc.collect()
+        return {"ok": True}
+    except Exception as e:
+        plt.close('all'); gc.collect()
+        return {"ok": False, "error": str(e)}, 500
+
+@app.route("/grafica/dispersion_iris")
+def grafica_dispersion_iris():
+    try:
+        iris = load_iris()
+        X, y = iris.data, iris.target
+        clases = ["setosa", "versicolor", "virginica"]
+        colores = ['#f97316', '#4f46e5', '#10b981']
+        fig, ax = plt.subplots(figsize=(5, 4))
+        for cls, color, nombre in zip([0, 1, 2], colores, clases):
+            idx = y == cls
+            ax.scatter(X[idx, 2], X[idx, 3], c=color, label=nombre, alpha=0.7, edgecolors='white', linewidth=0.3, s=40)
+        ax.axhline(0.8,  color='#f97316', linestyle='--', linewidth=1.2, alpha=0.6)
+        ax.axvline(4.75, color='#4f46e5', linestyle='--', linewidth=1.2, alpha=0.6)
+        ax.set_xlabel('Petal Length (cm)'); ax.set_ylabel('Petal Width (cm)')
+        ax.set_title('Dispersión — Iris (Petal Length vs Width)', fontweight='bold')
+        ax.legend(fontsize=8); ax.grid(True, alpha=0.2)
+        fig.tight_layout()
+        os.makedirs("static", exist_ok=True)
+        fig.savefig("static/grafica_dispersion.png", bbox_inches='tight', dpi=80)
+        plt.close(fig); del fig, ax, X, y; gc.collect()
+        return {"ok": True}
+    except Exception as e:
+        plt.close('all'); gc.collect()
+        return {"ok": False, "error": str(e)}, 500
+
+@app.route("/grafica/aprendizaje_iris")
+def grafica_aprendizaje_iris():
+    try:
+        iris = load_iris()
+        X, y = iris.data, iris.target
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        lc_sizes, lc_train, lc_test = [], [], []
+        for size in np.linspace(0.2, 1.0, 5):
+            n = max(int(size * len(X_train)), 4)
+            m = LogisticRegression(max_iter=150, solver='liblinear')
+            m.fit(X_train[:n], y_train[:n])
+            lc_sizes.append(n)
+            lc_train.append(round(accuracy_score(y_train[:n], m.predict(X_train[:n])) * 100, 1))
+            lc_test.append(round(accuracy_score(y_test, m.predict(X_test)) * 100, 1))
+            del m
+        fig, ax = plt.subplots(figsize=(5, 3))
+        ax.plot(lc_sizes, lc_train, 'o-', color='#4f46e5', linewidth=2, markersize=5, label='Entrenamiento')
+        ax.plot(lc_sizes, lc_test,  's--', color='#10b981', linewidth=2, markersize=5, label='Prueba')
+        ax.fill_between(lc_sizes, lc_train, lc_test, alpha=0.08, color='#f97316')
+        ax.set_xlabel('Muestras'); ax.set_ylabel('Accuracy (%)')
+        ax.set_title('Curva de Aprendizaje — Iris', fontweight='bold')
+        ax.legend(fontsize=8); ax.set_ylim([50, 105]); ax.grid(True, alpha=0.3)
+        fig.tight_layout()
+        os.makedirs("static", exist_ok=True)
+        fig.savefig("static/grafica_aprendizaje.png", bbox_inches='tight', dpi=80)
+        plt.close(fig); del fig, ax, X, y, X_train, X_test, y_train, y_test; gc.collect()
+        return {"ok": True}
+    except Exception as e:
+        plt.close('all'); gc.collect()
+        return {"ok": False, "error": str(e)}, 500
+
+@app.route("/grafica/matriz_iris")
+def grafica_matriz_iris():
+    try:
+        if not os.path.exists("models/modelo_iris.pkl"):
+            return {"ok": False, "error": "Modelo no entrenado aún"}, 400
+        iris = load_iris()
+        X, y = iris.data, iris.target
+        clases_iris = ["setosa", "versicolor", "virginica"]
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        modelo = joblib.load("models/modelo_iris.pkl")
+        predicciones = modelo.predict(X_test)
+        matriz = confusion_matrix(y_test, predicciones)
+        fig, ax = plt.subplots(figsize=(5, 4))
+        ax.imshow(matriz, interpolation='nearest', cmap=plt.cm.Blues)
+        ax.set_title("Matriz de Confusión - Iris")
+        tick_marks = range(len(clases_iris))
+        ax.set_xticks(list(tick_marks)); ax.set_xticklabels(clases_iris, rotation=45)
+        ax.set_yticks(list(tick_marks)); ax.set_yticklabels(clases_iris)
+        ax.set_xlabel("Predicción"); ax.set_ylabel("Valor Real")
+        for i in range(len(matriz)):
+            for j in range(len(matriz)):
+                ax.text(j, i, str(matriz[i, j]), ha="center", va="center",
+                        color="white" if matriz[i, j] > matriz.max() / 2.0 else "black")
+        fig.tight_layout()
+        os.makedirs("static", exist_ok=True)
+        fig.savefig("static/matriz.png", bbox_inches='tight', dpi=80)
+        plt.close(fig); del fig, ax, matriz, modelo; gc.collect()
+        return {"ok": True}
+    except Exception as e:
+        plt.close('all'); gc.collect()
+        return {"ok": False, "error": str(e)}, 500
+
+
+# ─────────────────────────────────────────────
 # RUTA: Entrenar modelo con Dataset Iris
 # ─────────────────────────────────────────────
 @app.route("/entrenar")
@@ -296,6 +413,178 @@ def archivo():
         nombre_archivo=nombre_archivo
     )
 
+
+
+# ─────────────────────────────────────────────
+# RUTAS: Generación individual de gráficas CSV
+# ─────────────────────────────────────────────
+
+@app.route("/grafica/sigmoide_csv")
+def grafica_sigmoide_csv():
+    try:
+        z = np.linspace(-8, 8, 80)
+        sigmoid = 1 / (1 + np.exp(-z))
+        fig, ax = plt.subplots(figsize=(5, 3))
+        ax.plot(z, sigmoid, color='#4f46e5', linewidth=2, label='σ(z)')
+        ax.axhline(0.5, color='#ef4444', linestyle='--', linewidth=1.2, label='Umbral 0.5')
+        ax.axvline(0,   color='#94a3b8', linestyle=':',  linewidth=1)
+        ax.fill_between(z, sigmoid, 0.5, where=(sigmoid > 0.5), alpha=0.1, color='#4f46e5')
+        ax.fill_between(z, sigmoid, 0.5, where=(sigmoid < 0.5), alpha=0.1, color='#ef4444')
+        ax.set_xlabel('z = β₀ + β₁x₁ + ...'); ax.set_ylabel('P(y=1)')
+        ax.set_title('Función Sigmoide — Regresión Logística', fontweight='bold')
+        ax.legend(fontsize=8); ax.grid(True, alpha=0.3)
+        fig.tight_layout()
+        os.makedirs("static", exist_ok=True)
+        fig.savefig("static/grafica_sigmoide_csv.png", bbox_inches='tight', dpi=80)
+        plt.close(fig); del fig, ax, z, sigmoid; gc.collect()
+        return {"ok": True}
+    except Exception as e:
+        plt.close('all'); gc.collect()
+        return {"ok": False, "error": str(e)}, 500
+
+@app.route("/grafica/dispersion_csv")
+def grafica_dispersion_csv():
+    try:
+        if not os.path.exists("models/predictoras.pkl") or not os.path.exists("uploads/dataset.csv"):
+            return {"ok": False, "error": "Primero entrena el modelo CSV"}, 400
+        predictoras = joblib.load("models/predictoras.pkl")
+        encoder_target = joblib.load("models/encoder_target.pkl") if os.path.exists("models/encoder_target.pkl") else None
+        df = pd.read_csv("uploads/dataset.csv")
+        target_col = joblib.load("models/target.pkl") if os.path.exists("models/target.pkl") else df.columns[-1]
+        X = df[predictoras].fillna(0)
+        y_raw = df[target_col]
+        if encoder_target is not None:
+            try: y_enc = encoder_target.transform(y_raw.astype(str))
+            except: y_enc = y_raw
+        else:
+            y_enc = y_raw
+        feat_x = predictoras[0]
+        feat_y = predictoras[1] if len(predictoras) > 1 else predictoras[0]
+        unique_classes = sorted(list(set(y_enc)))
+        colores_disp = ['#f97316', '#4f46e5', '#10b981', '#a855f7', '#ec4899', '#06b6d4']
+        fig, ax = plt.subplots(figsize=(5, 4))
+        for idx_c, cls_val in enumerate(unique_classes):
+            mask = (y_enc == cls_val)
+            color = colores_disp[idx_c % len(colores_disp)]
+            label = encoder_target.inverse_transform([cls_val])[0] if encoder_target else f"Clase {cls_val}"
+            if len(predictoras) == 1:
+                xv = X.loc[mask, feat_x].values
+                yv = np.array([cls_val]*len(xv)) + np.random.normal(0, 0.08, len(xv))
+                ax.scatter(xv, yv, c=color, label=str(label), alpha=0.7, s=35)
+            else:
+                ax.scatter(X.loc[mask, feat_x].values, X.loc[mask, feat_y].values, c=color, label=str(label), alpha=0.7, s=35)
+        ax.set_xlabel(feat_x); ax.set_ylabel(feat_y if len(predictoras) > 1 else target_col)
+        ax.set_title(f'Dispersión — {feat_x} vs {feat_y if len(predictoras)>1 else target_col}', fontweight='bold')
+        ax.legend(fontsize=8); ax.grid(True, alpha=0.2)
+        fig.tight_layout()
+        os.makedirs("static", exist_ok=True)
+        fig.savefig("static/grafica_dispersion_csv.png", bbox_inches='tight', dpi=80)
+        plt.close(fig); del fig, ax, df, X, y_enc; gc.collect()
+        return {"ok": True}
+    except Exception as e:
+        plt.close('all'); gc.collect()
+        return {"ok": False, "error": str(e)}, 500
+
+@app.route("/grafica/aprendizaje_csv")
+def grafica_aprendizaje_csv():
+    try:
+        if not os.path.exists("models/modelo_csv.pkl") or not os.path.exists("uploads/dataset.csv"):
+            return {"ok": False, "error": "Primero entrena el modelo CSV"}, 400
+        predictoras = joblib.load("models/predictoras.pkl")
+        encoders     = joblib.load("models/encoders.pkl")
+        encoder_target = joblib.load("models/encoder_target.pkl") if os.path.exists("models/encoder_target.pkl") else None
+        target_col   = joblib.load("models/target.pkl") if os.path.exists("models/target.pkl") else None
+        df = pd.read_csv("uploads/dataset.csv").dropna(subset=[target_col] if target_col else [])
+        X = df[predictoras].copy()
+        for col in X.columns:
+            if X[col].dtype == "object" or not pd.api.types.is_numeric_dtype(X[col]):
+                X[col] = X[col].fillna("Unknown").astype(str)
+                if col in encoders:
+                    X[col] = encoders[col].transform(X[col].map(
+                        lambda v: v if v in encoders[col].classes_ else encoders[col].classes_[0]))
+            else:
+                X[col] = X[col].fillna(X[col].median())
+        y_raw = df[target_col]
+        y = encoder_target.transform(y_raw.astype(str)) if encoder_target else y_raw.values
+        X_train, X_test, y_train, y_test = train_test_split(X.values, y, test_size=0.2, random_state=42)
+        lc_sizes, lc_train, lc_test = [], [], []
+        for size in np.linspace(0.2, 1.0, 5):
+            n = max(int(size * len(X_train)), 4)
+            n = min(n, len(X_train))
+            if n < 2: continue
+            try:
+                m = LogisticRegression(max_iter=300, solver='liblinear')
+                m.fit(X_train[:n], y_train[:n])
+                lc_sizes.append(n)
+                lc_train.append(round(accuracy_score(y_train[:n], m.predict(X_train[:n])) * 100, 1))
+                lc_test.append(round(accuracy_score(y_test, m.predict(X_test)) * 100, 1))
+                del m
+            except: pass
+        if len(lc_sizes) >= 2:
+            fig, ax = plt.subplots(figsize=(5, 3))
+            ax.plot(lc_sizes, lc_train, 'o-', color='#4f46e5', linewidth=2, markersize=5, label='Entrenamiento')
+            ax.plot(lc_sizes, lc_test,  's--', color='#10b981', linewidth=2, markersize=5, label='Prueba')
+            ax.fill_between(lc_sizes, lc_train, lc_test, alpha=0.08, color='#f97316')
+            ax.set_xlabel('Muestras'); ax.set_ylabel('Accuracy (%)')
+            ax.set_title('Curva de Aprendizaje — CSV', fontweight='bold')
+            ax.legend(fontsize=8); ax.grid(True, alpha=0.3)
+            fig.tight_layout()
+            os.makedirs("static", exist_ok=True)
+            fig.savefig("static/grafica_aprendizaje_csv.png", bbox_inches='tight', dpi=80)
+            plt.close(fig); del fig, ax; gc.collect()
+            return {"ok": True}
+        else:
+            return {"ok": False, "error": "Dataset muy pequeño para curva de aprendizaje"}, 400
+    except Exception as e:
+        plt.close('all'); gc.collect()
+        return {"ok": False, "error": str(e)}, 500
+
+@app.route("/grafica/matriz_csv_gen")
+def grafica_matriz_csv_gen():
+    try:
+        if not os.path.exists("models/modelo_csv.pkl") or not os.path.exists("uploads/dataset.csv"):
+            return {"ok": False, "error": "Primero entrena el modelo CSV"}, 400
+        predictoras = joblib.load("models/predictoras.pkl")
+        encoders     = joblib.load("models/encoders.pkl")
+        encoder_target = joblib.load("models/encoder_target.pkl") if os.path.exists("models/encoder_target.pkl") else None
+        target_col   = joblib.load("models/target.pkl") if os.path.exists("models/target.pkl") else None
+        modelo       = joblib.load("models/modelo_csv.pkl")
+        df = pd.read_csv("uploads/dataset.csv").dropna(subset=[target_col] if target_col else [])
+        X = df[predictoras].copy()
+        for col in X.columns:
+            if X[col].dtype == "object" or not pd.api.types.is_numeric_dtype(X[col]):
+                X[col] = X[col].fillna("Unknown").astype(str)
+                if col in encoders:
+                    X[col] = encoders[col].transform(X[col].map(
+                        lambda v: v if v in encoders[col].classes_ else encoders[col].classes_[0]))
+            else:
+                X[col] = X[col].fillna(X[col].median())
+        y_raw = df[target_col]
+        y = encoder_target.transform(y_raw.astype(str)) if encoder_target else y_raw.values
+        _, X_test, _, y_test = train_test_split(X.values, y, test_size=0.2, random_state=42)
+        predicciones = modelo.predict(X_test)
+        clases_labels = encoder_target.classes_ if encoder_target else sorted(set(y))
+        matriz = confusion_matrix(y_test, predicciones)
+        fig, ax = plt.subplots(figsize=(5, 4))
+        ax.imshow(matriz, interpolation='nearest', cmap=plt.cm.Blues)
+        ax.set_title("Matriz de Confusión - CSV")
+        tick_marks = range(len(clases_labels))
+        ax.set_xticks(list(tick_marks)); ax.set_xticklabels(clases_labels, rotation=45, ha='right')
+        ax.set_yticks(list(tick_marks)); ax.set_yticklabels(clases_labels)
+        ax.set_xlabel("Predicción"); ax.set_ylabel("Valor Real")
+        if len(matriz) <= 15:
+            for i in range(len(matriz)):
+                for j in range(len(matriz)):
+                    ax.text(j, i, str(matriz[i, j]), ha="center", va="center",
+                            color="white" if matriz[i, j] > matriz.max() / 2.0 else "black")
+        fig.tight_layout()
+        os.makedirs("static", exist_ok=True)
+        fig.savefig("static/matriz_csv.png", bbox_inches='tight', dpi=80)
+        plt.close(fig); del fig, ax, matriz, modelo; gc.collect()
+        return {"ok": True}
+    except Exception as e:
+        plt.close('all'); gc.collect()
+        return {"ok": False, "error": str(e)}, 500
 
 
 # ─────────────────────────────────────────────
