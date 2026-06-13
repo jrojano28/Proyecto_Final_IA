@@ -16,8 +16,8 @@ COPY . .
 RUN mkdir -p uploads models static/css \
     && chmod -R 777 uploads models static
 
-# Hugging Face Spaces requiere puerto 7860
-EXPOSE 7860
+# Puerto por defecto (Koyeb lo sobreescribe con $PORT)
+EXPOSE 8000
 
-# Usar gunicorn en producción
-CMD ["gunicorn", "--bind", "0.0.0.0:7860", "--workers", "1", "--timeout", "120", "app:app"]
+# Usar variable de entorno PORT (Koyeb la inyecta automáticamente)
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 1 --timeout 120 app:app"]
